@@ -134,6 +134,15 @@ void PlayerbotHolder::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId
             allowed = false;
             out << "Failure: You have added too many bots (more than " << sPlayerbotAIConfig.maxAddedBots << ")";
         }
+        // MaxAddedAltBots bounds the player's own characters among those bots (same account or a
+        // linked one); guild characters and addclass bots are not alts and only count for MaxAddedBots.
+        else if (sPlayerbotAIConfig.maxAddedAltBots > 0 && (accountId == masterAccountId || linkedAccount) &&
+                 mgr->GetAltBotsCount(masterAccountId) >= uint32(sPlayerbotAIConfig.maxAddedAltBots))
+        {
+            allowed = false;
+            out << "Failure: You can only add " << sPlayerbotAIConfig.maxAddedAltBots
+                << " of your own characters at a time";
+        }
     }
     if (!allowed)
     {
@@ -193,6 +202,37 @@ bool PlayerbotHolder::IsAccountLinked(uint32 accountId, uint32 linkedAccountId)
     QueryResult result = PlayerbotsDatabase.Query(
         "SELECT 1 FROM playerbots_account_links WHERE account_id = {} AND linked_account_id = {}", accountId, linkedAccountId);
     return result != nullptr;
+}
+
+// A character of the master's own: on the master's account or, with AllowTrustedAccountBots, on an account
+// linked to it. Guild characters and addclass bots are not.
+bool PlayerbotHolder::IsAltOf(uint32 accountId, uint32 masterAccountId)
+{
+    if (accountId == masterAccountId)
+        return true;
+
+    return sPlayerbotAIConfig.allowTrustedAccountBots && IsAccountLinked(accountId, masterAccountId);
+}
+
+// The master's own characters among the bots: the ones already added plus the ones still logging in for them.
+uint32 PlayerbotHolder::GetAltBotsCount(uint32 masterAccountId)
+{
+    uint32 count = 0;
+    for (auto const& [guid, bot] : playerBots)
+    {
+        if (!sRandomPlayerbotMgr.IsAddclassBot(guid.GetCounter()) &&
+            IsAltOf(bot->GetSession()->GetAccountId(), masterAccountId))
+            ++count;
+    }
+
+    for (auto const& [guid, acctId] : botLoading)
+    {
+        if (acctId == masterAccountId && !sRandomPlayerbotMgr.IsAddclassBot(guid.GetCounter()) &&
+            IsAltOf(sCharacterCache->GetCharacterAccountIdByGuid(guid), masterAccountId))
+            ++count;
+    }
+
+    return count;
 }
 
 void PlayerbotHolder::HandlePlayerBotLoginCallback(PlayerbotLoginQueryHolder const& holder)

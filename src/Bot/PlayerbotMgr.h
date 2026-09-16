@@ -27,6 +27,8 @@ public:
 
     void AddPlayerBot(ObjectGuid guid, uint32 masterAccountId);
     bool IsAccountLinked(uint32 accountId, uint32 masterAccountId);
+    bool IsAltOf(uint32 accountId, uint32 masterAccountId);
+    uint32 GetAltBotsCount(uint32 masterAccountId);
     void HandlePlayerBotLoginCallback(PlayerbotLoginQueryHolder const& holder);
 
     void LogoutPlayerBot(ObjectGuid guid);

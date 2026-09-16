@@ -426,6 +426,7 @@ public:
     float autoInitEquipLevelLimitRatio;
     int32 maxAddedBots;
     bool maxAddedBotsIncludesInvited;
+    int32 maxAddedAltBots;
     int32 addClassCommand;
     int32 addClassAccountPoolSize;
     int32 maintenanceCommand;
