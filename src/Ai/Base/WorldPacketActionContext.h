@@ -43,6 +43,7 @@
 #include "TellMasterAction.h"
 #include "TradeStatusAction.h"
 #include "TradeStatusExtendedAction.h"
+#include "SummoningRitualAction.h"
 #include "UseMeetingStoneAction.h"
 
 class PlayerbotAI;
@@ -61,6 +62,7 @@ public:
         creators["loot roll"] = &WorldPacketActionContext::loot_roll;
         creators["master loot roll"] = &WorldPacketActionContext::master_loot_roll;
         creators["revive from corpse"] = &WorldPacketActionContext::revive_from_corpse;
+        creators["accept summon"] = &WorldPacketActionContext::accept_summon;
         creators["find corpse"] = &WorldPacketActionContext::find_corpse;
         creators["auto release"] = &WorldPacketActionContext::auto_release;
         creators["accept resurrect"] = &WorldPacketActionContext::accept_resurrect;
@@ -141,6 +143,7 @@ private:
     static Action* find_corpse(PlayerbotAI* botAI) { return new FindCorpseAction(botAI); }
     static Action* auto_release(PlayerbotAI* botAI) { return new AutoReleaseSpiritAction(botAI); }
     static Action* revive_from_corpse(PlayerbotAI* botAI) { return new ReviveFromCorpseAction(botAI); }
+    static Action* accept_summon(PlayerbotAI* botAI) { return new AcceptSummonAction(botAI); }
     static Action* accept_invitation(PlayerbotAI* botAI) { return new AcceptInvitationAction(botAI); }
     static Action* give_leader_in_dungeon(PlayerbotAI* botAI) { return new GiveLeaderAction(botAI, "I don't know this dungeon, lead the way!"); }
     static Action* pass_leadership_to_master(PlayerbotAI* botAI) { return new PassLeadershipToMasterAction(botAI); }

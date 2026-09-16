@@ -26,6 +26,7 @@ public:
         creators["use game object"] = &WorldPacketTriggerContext::use_game_object;
         creators["loot roll"] = &WorldPacketTriggerContext::loot_roll;
         creators["resurrect request"] = &WorldPacketTriggerContext::resurrect_request;
+        creators["summon request"] = &WorldPacketTriggerContext::summon_request;
         creators["area trigger"] = &WorldPacketTriggerContext::area_trigger;
         creators["within area trigger"] = &WorldPacketTriggerContext::within_area_trigger;
         creators["check mount state"] = &WorldPacketTriggerContext::check_mount_state;
@@ -118,6 +119,7 @@ private:
     static Trigger* area_trigger(PlayerbotAI* botAI) { return new WorldPacketTrigger(botAI, "area trigger"); }
     static Trigger* within_area_trigger(PlayerbotAI* botAI) { return new WithinAreaTrigger(botAI); }
     static Trigger* resurrect_request(PlayerbotAI* botAI) { return new WorldPacketTrigger(botAI, "resurrect request"); }
+    static Trigger* summon_request(PlayerbotAI* botAI) { return new WorldPacketTrigger(botAI, "summon request"); }
     static Trigger* gossip_hello(PlayerbotAI* botAI) { return new WorldPacketTrigger(botAI, "gossip hello"); }
     static Trigger* group_invite(PlayerbotAI* botAI) { return new WorldPacketTrigger(botAI, "group invite"); }
     static Trigger* group_set_leader(PlayerbotAI* botAI) { return new WorldPacketTrigger(botAI, "group set leader"); }
