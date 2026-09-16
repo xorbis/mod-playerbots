@@ -47,7 +47,6 @@ public:
     ContinueConjuredRequestAction(PlayerbotAI* botAI) : Action(botAI, "continue conjured request") {}
 
     bool Execute(Event event) override;
-    bool isUsefulWhenStunned() override { return false; }
 };
 
 #endif
