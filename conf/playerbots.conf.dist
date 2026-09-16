@@ -646,6 +646,11 @@ AiPlayerbot.AutoGearScoreLimit = 0
 # Default: food, taxi, and raid are enabled
 AiPlayerbot.BotCheats = "food,taxi,raid"
 
+# Enable/Disable the "cheat" chat command, which toggles the cheats above on one bot
+# ("cheat +gold" lets the bot buy from vendors, train and repair for free) (0 = GM only, 1 = enabled)
+# Default: 1 (enabled)
+AiPlayerbot.CheatCommand = 1
+
 # List of attunement quests (comma-separated list of quest IDs) that are automatically completed for all bots.
 # While mod-playerbots does not restore removed attunement requirements, other mods, such as mod-individual-progression, may do so.
 # This is meant to exclude bots from such requirements.

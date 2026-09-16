@@ -5,10 +5,21 @@
  */
 
 #include "CheatAction.h"
+#include "Event.h"
 #include "Playerbots.h"
 
 bool CheatAction::Execute(Event event)
 {
+    if (sPlayerbotAIConfig.cheatCommand == 0)
+    {
+        Player* requester = event.getOwner() ? event.getOwner() : botAI->GetMaster();
+        if (!requester || !requester->CanBeGameMaster())
+        {
+            botAI->TellError("cheat command is not allowed, please check the configuration.");
+            return false;
+        }
+    }
+
     std::string const param = event.getParam();
 
     uint32 cheatMask = (uint32)botAI->GetCheat();
