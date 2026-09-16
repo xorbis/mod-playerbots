@@ -135,6 +135,13 @@ AiPlayerbot.DisabledWithoutRealPlayerLogoutDelay = 300
 # The maximum number of bots that a player can control simultaneously
 AiPlayerbot.MaxAddedBots = 40
 
+# Count the random bots a player invites to the group against MaxAddedBots. An invited random
+# bot takes the inviter as its master and follows like an added bot; with this enabled a random
+# bot declines the invite once the player already has MaxAddedBots bots (added ones plus random
+# bots in the group). Guild invites and groups formed by the LFG tool are not affected.
+# Default: 0 (disabled: only added bots count, invited random bots are not limited)
+AiPlayerbot.MaxAddedBotsIncludesInvited = 0
+
 # Enable/Disable creating bots by addclass command (0 = GM only, 1 = enabled)
 # Default: 1 (enabled)
 AiPlayerbot.AddClassCommand = 1

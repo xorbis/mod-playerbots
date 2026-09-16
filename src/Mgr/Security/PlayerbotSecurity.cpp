@@ -9,6 +9,29 @@
 #include "PlayerbotAIConfig.h"
 #include "Playerbots.h"
 
+#include <set>
+
+// Bots a player is responsible for: the ones added with the bot commands, plus the random bots
+// that joined the player's group (an invited random bot takes the inviter as its master).
+static uint32 CountBotsOf(Player* from)
+{
+    std::set<ObjectGuid> bots;
+
+    if (PlayerbotMgr* mgr = GET_PLAYERBOT_MGR(from))
+        for (PlayerBotMap::const_iterator itr = mgr->GetPlayerBotsBegin(); itr != mgr->GetPlayerBotsEnd(); ++itr)
+            bots.insert(itr->first);
+
+    if (Group* group = from->GetGroup())
+        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+            if (Player* member = ref->GetSource())
+                if (member != from)
+                    if (PlayerbotAI* memberAI = GET_PLAYERBOT_AI(member))
+                        if (memberAI->GetMaster() == from)
+                            bots.insert(member->GetGUID());
+
+    return bots.size();
+}
+
 PlayerbotSecurity::PlayerbotSecurity(Player* const bot) : bot(bot)
 {
     if (bot)
@@ -121,6 +144,17 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
 
                 return PLAYERBOT_SECURITY_TALK;
             }
+        }
+
+        // MaxAddedBots can also bound the random bots a player collects by inviting them:
+        // they follow the inviter like added bots, so they count the same way.
+        if (!ignoreGroup && sPlayerbotAIConfig.maxAddedBotsIncludesInvited && sPlayerbotAIConfig.maxAddedBots > 0 &&
+            CountBotsOf(from) >= uint32(sPlayerbotAIConfig.maxAddedBots))
+        {
+            if (reason)
+                *reason = PLAYERBOT_DENY_TOO_MANY_BOTS;
+
+            return PLAYERBOT_SECURITY_TALK;
         }
 
         // If the bot is not in the group, we offer an invite
@@ -258,6 +292,9 @@ bool PlayerbotSecurity::CheckLevelFor(PlayerbotSecurityLevel level, bool silent,
                     break;
                 case PLAYERBOT_DENY_LFG:
                     out << "I am in a queue for dungeon. Will do it later";
+                    break;
+                case PLAYERBOT_DENY_TOO_MANY_BOTS:
+                    out << "You already have " << sPlayerbotAIConfig.maxAddedBots << " bots with you. I would be one too many";
                     break;
                 default:
                     out << "I can't do that";
