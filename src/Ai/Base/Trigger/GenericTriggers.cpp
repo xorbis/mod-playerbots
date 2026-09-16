@@ -16,6 +16,7 @@
 #include "PlayerbotAIConfig.h"
 #include "Playerbots.h"
 #include "PositionValue.h"
+#include "TradeAction.h"
 #include "SharedDefines.h"
 #include "TemporarySummon.h"
 #include "ThreatManager.h"
@@ -258,6 +259,15 @@ bool NoFoodTrigger::IsActive()
         return false;
 
     return AI_VALUE2(std::vector<Item*>, "inventory items", "conjured food").empty();
+}
+
+bool ConjuredRequestPendingTrigger::IsActive()
+{
+    if (!sPlayerbotAIConfig.conjuredItemsForGroup)
+        return false;
+
+    TradeAction* trade = dynamic_cast<TradeAction*>(botAI->GetAiObjectContext()->GetAction("trade"));
+    return trade && trade->HasPendingRequest();
 }
 
 bool NoDrinkTrigger::IsActive()

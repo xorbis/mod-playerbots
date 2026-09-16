@@ -64,31 +64,29 @@ public:
     bool IsActive() override;
 };
 
-// ConjuredItemsForGroup: grouped with a real player and short of conjured food / water to hand out
+// ConjuredItemsForGroup: grouped with a real player and short of conjured food / water that the
+// lowest-level real player in the group can use
 class ConjuredStockTrigger : public Trigger
 {
 public:
-    ConjuredStockTrigger(PlayerbotAI* botAI, std::string const name, std::string const item, std::string const spell)
-        : Trigger(botAI, name, 10 * 1000), item(item), spell(spell) {}
+    ConjuredStockTrigger(PlayerbotAI* botAI, std::string const name, std::string const request)
+        : Trigger(botAI, name, 10 * 1000), request(request) {}
     bool IsActive() override;
 
 private:
-    std::string const item;
-    std::string const spell;
+    std::string const request;
 };
 
 class ConjuredFoodStockTrigger : public ConjuredStockTrigger
 {
 public:
-    ConjuredFoodStockTrigger(PlayerbotAI* botAI)
-        : ConjuredStockTrigger(botAI, "conjured food stock", "conjured food", "conjure food") {}
+    ConjuredFoodStockTrigger(PlayerbotAI* botAI) : ConjuredStockTrigger(botAI, "conjured food stock", "conjured food") {}
 };
 
 class ConjuredWaterStockTrigger : public ConjuredStockTrigger
 {
 public:
-    ConjuredWaterStockTrigger(PlayerbotAI* botAI)
-        : ConjuredStockTrigger(botAI, "conjured water stock", "conjured water", "conjure water") {}
+    ConjuredWaterStockTrigger(PlayerbotAI* botAI) : ConjuredStockTrigger(botAI, "conjured water stock", "conjured water") {}
 };
 
 class FireWardTrigger : public DeflectSpellTrigger

@@ -23,6 +23,7 @@
 #include "RpgTriggers.h"
 #include "RtiTriggers.h"
 #include "StuckTriggers.h"
+#include "SummoningRitualTriggers.h"
 #include "TravelTriggers.h"
 #include "WaitForAttackTriggers.h"
 
@@ -37,6 +38,7 @@ public:
         creators["sit"] = &TriggerContext::sit;
         creators["return to stay position"] = &TriggerContext::return_to_stay_position;
         creators["collision"] = &TriggerContext::collision;
+        creators["summoning ritual"] = &TriggerContext::summoning_ritual;
 
         creators["timer"] = &TriggerContext::Timer;
         creators["timer bg"] = &TriggerContext::TimerBG;
@@ -144,6 +146,7 @@ public:
         creators["return to pull position"] = &TriggerContext::return_to_pull_position;
 
         creators["no drink"] = &TriggerContext::no_drink;
+        creators["conjured request pending"] = &TriggerContext::conjured_request_pending;
         creators["no food"] = &TriggerContext::no_food;
 
         creators["panic"] = &TriggerContext::panic;
@@ -265,6 +268,7 @@ private:
     static Trigger* no_rpg_target(PlayerbotAI* botAI) { return new NoRpgTargetTrigger(botAI); }
     static Trigger* has_rpg_target(PlayerbotAI* botAI) { return new HasRpgTargetTrigger(botAI); }
     static Trigger* collision(PlayerbotAI* botAI) { return new CollisionTrigger(botAI); }
+    static Trigger* summoning_ritual(PlayerbotAI* botAI) { return new SummoningRitualTrigger(botAI); }
     static Trigger* lfg_proposal_active(PlayerbotAI* botAI) { return new LfgProposalActiveTrigger(botAI); }
     static Trigger* unknown_dungeon(PlayerbotAI* botAI) { return new UnknownDungeonTrigger(botAI); }
     static Trigger* invalid_target(PlayerbotAI* botAI) { return new InvalidTargetTrigger(botAI); }
@@ -305,6 +309,7 @@ private:
     static Trigger* panic(PlayerbotAI* botAI) { return new PanicTrigger(botAI); }
     static Trigger* outnumbered(PlayerbotAI* botAI) { return new OutNumberedTrigger(botAI); }
     static Trigger* no_drink(PlayerbotAI* botAI) { return new NoDrinkTrigger(botAI); }
+    static Trigger* conjured_request_pending(PlayerbotAI* botAI) { return new ConjuredRequestPendingTrigger(botAI); }
     static Trigger* no_food(PlayerbotAI* botAI) { return new NoFoodTrigger(botAI); }
     static Trigger* LightAoe(PlayerbotAI* botAI) { return new LightAoeTrigger(botAI); }
     static Trigger* MediumAoe(PlayerbotAI* botAI) { return new MediumAoeTrigger(botAI); }

@@ -5,6 +5,7 @@
  */
 
 #include "MageTriggers.h"
+#include "ConjuredItems.h"
 #include "DynamicObject.h"
 #include "Player.h"
 #include "Playerbots.h"
@@ -15,14 +16,20 @@
 
 bool ConjuredStockTrigger::IsActive()
 {
-    if (!sPlayerbotAIConfig.conjuredItemsForGroup || !botAI->HasSpell(spell))
+    if (!sPlayerbotAIConfig.conjuredItemsForGroup || bot->IsInCombat())
         return false;
 
-    if (botAI->GetRealPlayersInGroup().empty())
+    uint8 const level = LowestRealPlayerLevelInGroup(botAI);
+    if (!level || !ConjureSpellIdFor(bot, request, level))
         return false;
 
-    // one stack to hand out on top of what the bot keeps for itself
-    return AI_VALUE2(uint32, "item count", item) < 20;
+    // one stack that the lowest-level real player can use
+    Player* lowest = nullptr;
+    for (Player* player : botAI->GetRealPlayersInGroup())
+        if (player->GetLevel() == level)
+            lowest = player;
+
+    return UsableConjuredCount(botAI, request, lowest) < 20;
 }
 
 bool NoManaGemTrigger::IsActive()

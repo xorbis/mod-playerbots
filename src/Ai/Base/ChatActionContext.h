@@ -131,6 +131,7 @@ public:
         creators["buy"] = &ChatActionContext::buy;
         creators["reward"] = &ChatActionContext::reward;
         creators["trade"] = &ChatActionContext::trade;
+        creators["continue conjured request"] = &ChatActionContext::continue_conjured_request;
         creators["talents"] = &ChatActionContext::talents;
         creators["spells"] = &ChatActionContext::spells;
         creators["co"] = &ChatActionContext::co;
@@ -277,6 +278,7 @@ private:
     static Action* buy(PlayerbotAI* botAI) { return new BuyAction(botAI); }
     static Action* reward(PlayerbotAI* botAI) { return new RewardAction(botAI); }
     static Action* trade(PlayerbotAI* botAI) { return new TradeAction(botAI); }
+    static Action* continue_conjured_request(PlayerbotAI* botAI) { return new ContinueConjuredRequestAction(botAI); }
 
     static Action* item_count(PlayerbotAI* botAI) { return new TellItemCountAction(botAI); }
     static Action* use(PlayerbotAI* botAI) { return new UseItemAction(botAI); }

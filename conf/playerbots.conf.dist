@@ -798,9 +798,11 @@ AiPlayerbot.BotTradeConjuredOnly = 0
 
 # Conjured items for the group. Any real player in the bot's group may ask for them in chat
 # ("food", "water", "hs", also with "t " in front) and the bot trades
-# with whoever asked, not only with its master. Mages grouped with a real player keep a stack of
-# conjured food and water of their highest rank and conjure more when asked while short;
-# warlocks create a healthstone when asked while they have none (their talents decide which).
+# with whoever asked, not only with its master, a full stack of food/water at a time, always of a
+# rank the requester can use. A mage or warlock that is short conjures first (cast after cast, up
+# to a stack) and then opens the trade itself; mages grouped with a real player also keep a stack
+# ready that the lowest-level real player can use. Healthstones follow the warlock's rank and
+# talents.
 # Default: 0 (disabled)
 AiPlayerbot.ConjuredItemsForGroup = 0
 

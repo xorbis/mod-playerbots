@@ -43,6 +43,7 @@ void ChatCommandHandlerStrategy::InitTriggers(std::vector<TriggerNode*>& trigger
     triggers.push_back(new TriggerNode("ue", { NextAction("unequip", relevance) }));
     triggers.push_back(new TriggerNode("t", { NextAction("trade", relevance) }));
     triggers.push_back(new TriggerNode("nt", { NextAction("trade", relevance) }));
+    triggers.push_back(new TriggerNode("conjured request pending", { NextAction("continue conjured request", relevance) }));
     triggers.push_back(new TriggerNode("s", { NextAction("sell", relevance) }));
     triggers.push_back(new TriggerNode("b", { NextAction("buy", relevance) }));
     triggers.push_back(new TriggerNode("r", { NextAction("reward", relevance) }));

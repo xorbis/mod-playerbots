@@ -9,6 +9,7 @@
 #include "Event.h"
 #include "ItemCountValue.h"
 #include "ItemVisitors.h"
+#include "ConjuredItems.h"
 #include "PlayerbotAI.h"
 #include "Playerbots.h"
 
@@ -22,26 +23,32 @@ static bool ConjuredOnlyFor(Player* bot, Player* player)
            bot->GetSession()->GetAccountId() != player->GetSession()->GetAccountId();
 }
 
-// The spell that makes what was asked for (a normalized conjured request), if this bot has one
-static std::string ConjureSpellFor(Player* bot, std::string const& request)
+static uint32 const CONJURED_REQUEST_MAX_CASTS = 12;    // 2 per cast at low ranks: enough for a stack
+static uint32 const CONJURED_REQUEST_TIMEOUT = 90;      // seconds before a request is dropped
+static float const CONJURED_REQUEST_TRADE_RANGE = 9.0f; // the trade distance, a bit under it
+
+void TradeAction::SetPending(std::string const& request, Player* player)
 {
-    switch (bot->getClass())
+    if (pendingRequest != request || pendingFor != player->GetGUID())
     {
-        case CLASS_MAGE:
-            if (request == "conjured food")
-                return "conjure food";
-            if (request == "conjured water")
-                return "conjure water";
-            break;
-        case CLASS_WARLOCK:
-            if (request == "healthstone")
-                return "create healthstone";
-            break;
-        default:
-            break;
+        pendingCasts = 0;
+        pendingTold = false;
+        pendingSince = time(nullptr);
     }
-    return "";
+    pendingRequest = request;
+    pendingFor = player->GetGUID();
 }
+
+void TradeAction::ClearPending()
+{
+    pendingRequest.clear();
+    pendingFor.Clear();
+    pendingSince = 0;
+    pendingCasts = 0;
+    pendingTold = false;
+}
+
+uint32 TradeAction::PendingTarget() const { return pendingRequest == "healthstone" ? 1 : 20; }
 
 bool TradeAction::Execute(Event event)
 {
@@ -81,11 +88,14 @@ bool TradeAction::Execute(Event event)
 
         if (!player->GetTrader())
         {
-            // a conjured request fills the window as soon as the player opens it (TradeStatusAction)
-            if (sPlayerbotAIConfig.conjuredItemsForGroup && botAI->IsConjuredItemRequest(text))
+            if (!conjured.empty())
             {
-                pendingRequest = text;
-                pendingFor = player->GetGUID();
+                // remembered until served: conjured first when short (ContinuePending), put in the
+                // window as soon as the player opens it (FillPending)
+                SetPending(conjured, player);
+                if (UsableConjuredCount(botAI, conjured, player) < PendingTarget() &&
+                    ConjureSpellIdFor(bot, conjured, player->GetLevel()))
+                    return ContinuePending();
             }
 
             WorldPacket packet(CMSG_INITIATE_TRADE);
@@ -120,22 +130,32 @@ bool TradeAction::Execute(Event event)
                     found.end());
     }
 
-    if (!conjured.empty())
+    if (trader && !conjured.empty())
     {
-        // a whole stack at once: the fullest one first
+        // only what the requester can use, a whole stack at once: the fullest one first
+        found.erase(std::remove_if(found.begin(), found.end(),
+                                   [trader](Item* item) { return trader->CanUseItem(item->GetTemplate()) != EQUIP_ERR_OK; }),
+                    found.end());
         std::stable_sort(found.begin(), found.end(),
                          [](Item* a, Item* b) { return a->GetCount() > b->GetCount(); });
-    }
 
-    if (found.empty() && trader && !conjured.empty())
-    {
-        // nothing to give yet: conjure it now, the player asks again in a moment
-        std::string const spell = ConjureSpellFor(bot, conjured);
-        if (!spell.empty() && botAI->HasSpell(spell))
+        uint32 have = 0;
+        for (Item* item : found)
+            have += item->GetCount();
+
+        // not a full stack yet: conjure first, the pending machinery calls back here
+        if (have < PendingTarget() && pendingCasts < CONJURED_REQUEST_MAX_CASTS &&
+            ConjureSpellIdFor(bot, conjured, trader->GetLevel()))
         {
-            bot->Whisper("Give me a moment to conjure some, then ask again", LANG_UNIVERSAL, trader);
-            botAI->DoSpecificAction(spell, Event(), true);
-            return true;
+            SetPending(conjured, trader);
+            return ContinuePending();
+        }
+
+        if (found.empty())
+        {
+            bot->Whisper("I have none you could use and cannot conjure any right now", LANG_UNIVERSAL, trader);
+            ClearPending();
+            return false;
         }
     }
 
@@ -153,6 +173,9 @@ bool TradeAction::Execute(Event event)
             break;
     }
 
+    if (!conjured.empty() && traded)
+        ClearPending();
+
     return true;
 }
 
@@ -161,11 +184,69 @@ bool TradeAction::FillPending(Player* trader)
     if (pendingRequest.empty() || !trader || trader->GetGUID() != pendingFor)
         return false;
 
-    std::string const text = pendingRequest;
-    pendingRequest.clear();
-    pendingFor.Clear();
+    return Execute(Event("trade", pendingRequest, trader));
+}
 
-    return Execute(Event("trade", text, trader));
+bool TradeAction::ContinuePending()
+{
+    if (pendingRequest.empty())
+        return false;
+
+    Player* player = ObjectAccessor::FindPlayer(pendingFor);
+    if (!player || !player->IsInWorld() || !bot->IsInWorld() ||
+        (!botAI->CanRequestConjuredItems(player) && player != botAI->GetMaster()) ||
+        time(nullptr) - pendingSince > CONJURED_REQUEST_TIMEOUT)
+    {
+        ClearPending();
+        return false;
+    }
+
+    if (bot->IsNonMeleeSpellCast(false))
+        return false;   // a conjure is under way
+
+    uint32 const spellId = ConjureSpellIdFor(bot, pendingRequest, player->GetLevel());
+    if (UsableConjuredCount(botAI, pendingRequest, player) < PendingTarget() && spellId &&
+        pendingCasts < CONJURED_REQUEST_MAX_CASTS && !bot->IsInCombat())
+    {
+        if (!pendingTold)
+        {
+            bot->Whisper("Give me a moment, I am conjuring some for you", LANG_UNIVERSAL, player);
+            pendingTold = true;
+        }
+
+        ++pendingCasts;
+        if (botAI->CastSpell(spellId, bot))
+            return true;
+        // the cast did not start (mana, bags): hand over what there is
+    }
+
+    if (!UsableConjuredCount(botAI, pendingRequest, player))
+    {
+        bot->Whisper("I cannot conjure any you could use right now", LANG_UNIVERSAL, player);
+        ClearPending();
+        return false;
+    }
+
+    // enough, or as much as it gets: trade
+    if (Player* trader = bot->GetTrader())
+        return trader == player && Execute(Event("trade", pendingRequest, player));   // else busy: keep waiting
+
+    if (player->GetTrader())
+        return false;   // the player is trading with someone else
+
+    if (!bot->IsWithinDistInMap(player, CONJURED_REQUEST_TRADE_RANGE))
+        return false;   // out of trade range: wait until they are close
+
+    WorldPacket packet(CMSG_INITIATE_TRADE);
+    packet << player->GetGUID();
+    bot->GetSession()->HandleInitiateTradeOpcode(packet);
+    return true;   // TRADE_STATUS_OPEN_WINDOW -> FillPending
+}
+
+bool ContinueConjuredRequestAction::Execute(Event /*event*/)
+{
+    TradeAction* trade = dynamic_cast<TradeAction*>(context->GetAction("trade"));
+    return trade && trade->ContinuePending();
 }
 
 bool TradeAction::TradeItem(Item const* item, int8 slot)

@@ -39,8 +39,8 @@ void GenericMageNonCombatStrategy::InitTriggers(std::vector<TriggerNode*>& trigg
     triggers.push_back(new TriggerNode("no focus magic", { NextAction("focus magic on party", 19.0f) }));
     triggers.push_back(new TriggerNode("often", { NextAction("apply oil", 1.0f) }));
     triggers.push_back(new TriggerNode("no mana gem", { NextAction("conjure mana gem", 20.0f) }));
-    triggers.push_back(new TriggerNode("conjured water stock", { NextAction("conjure water", 18.0f) }));
-    triggers.push_back(new TriggerNode("conjured food stock", { NextAction("conjure food", 17.0f) }));
+    triggers.push_back(new TriggerNode("conjured water stock", { NextAction("conjure water for group", 18.0f) }));
+    triggers.push_back(new TriggerNode("conjured food stock", { NextAction("conjure food for group", 17.0f) }));
 }
 
 void MageBuffManaStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)

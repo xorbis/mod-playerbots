@@ -5,6 +5,7 @@
  */
 
 #include "MageAiObjectContext.h"
+#include "ConjuredItems.h"
 #include "ArcaneMageStrategy.h"
 #include "FireMageStrategy.h"
 #include "FrostFireMageStrategy.h"
@@ -200,6 +201,8 @@ public:
         creators["arcane intellect on party"] = &MageAiObjectContextInternal::arcane_intellect_on_party;
         creators["conjure water"] = &MageAiObjectContextInternal::conjure_water;
         creators["conjure food"] = &MageAiObjectContextInternal::conjure_food;
+        creators["conjure water for group"] = &MageAiObjectContextInternal::conjure_water_for_group;
+        creators["conjure food for group"] = &MageAiObjectContextInternal::conjure_food_for_group;
         creators["conjure mana gem"] = &MageAiObjectContextInternal::conjure_mana_gem;
         creators["molten armor"] = &MageAiObjectContextInternal::molten_armor;
         creators["mage armor"] = &MageAiObjectContextInternal::mage_armor;
@@ -266,6 +269,8 @@ private:
     static Action* arcane_intellect_on_party(PlayerbotAI* botAI) { return new CastArcaneIntellectOnPartyAction(botAI); }
     static Action* conjure_water(PlayerbotAI* botAI) { return new CastConjureWaterAction(botAI); }
     static Action* conjure_food(PlayerbotAI* botAI) { return new CastConjureFoodAction(botAI); }
+    static Action* conjure_water_for_group(PlayerbotAI* botAI) { return new ConjureWaterForGroupAction(botAI); }
+    static Action* conjure_food_for_group(PlayerbotAI* botAI) { return new ConjureFoodForGroupAction(botAI); }
     static Action* conjure_mana_gem(PlayerbotAI* botAI) { return new CastConjureManaGemAction(botAI); }
     static Action* molten_armor(PlayerbotAI* botAI) { return new CastMoltenArmorAction(botAI); }
     static Action* mage_armor(PlayerbotAI* botAI) { return new CastMageArmorAction(botAI); }

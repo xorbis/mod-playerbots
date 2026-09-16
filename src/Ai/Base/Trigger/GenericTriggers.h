@@ -289,6 +289,15 @@ public:
     bool IsActive() override;
 };
 
+// ConjuredItemsForGroup: a conjured request is still being conjured or waiting for its window
+class ConjuredRequestPendingTrigger : public Trigger
+{
+public:
+    ConjuredRequestPendingTrigger(PlayerbotAI* botAI) : Trigger(botAI, "conjured request pending", 2 * 1000) {}
+
+    bool IsActive() override;
+};
+
 class LightAoeTrigger : public AoeTrigger
 {
 public:
