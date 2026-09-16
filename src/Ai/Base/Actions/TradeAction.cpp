@@ -10,10 +10,48 @@
 #include "ItemCountValue.h"
 #include "ItemVisitors.h"
 #include "PlayerbotAI.h"
+#include "Playerbots.h"
+
+#include <algorithm>
+
+// BotTradeConjuredOnly: a real player who is not on the bot's own account gets conjured items only
+static bool ConjuredOnlyFor(Player* bot, Player* player)
+{
+    return sPlayerbotAIConfig.botTradeConjuredOnly && player && player->GetSession() &&
+           (IsRealPlayer(player) || IsSelfBot(player)) &&
+           bot->GetSession()->GetAccountId() != player->GetSession()->GetAccountId();
+}
+
+// The spell that makes what was asked for (a normalized conjured request), if this bot has one
+static std::string ConjureSpellFor(Player* bot, std::string const& request)
+{
+    switch (bot->getClass())
+    {
+        case CLASS_MAGE:
+            if (request == "conjured food")
+                return "conjure food";
+            if (request == "conjured water")
+                return "conjure water";
+            break;
+        case CLASS_WARLOCK:
+            if (request == "healthstone")
+                return "create healthstone";
+            break;
+        default:
+            break;
+    }
+    return "";
+}
 
 bool TradeAction::Execute(Event event)
 {
-    std::string const text = event.getParam();
+    std::string text = event.getParam();
+
+    // "water" / "food" / "hs" from a group member: the conjured kind only, and by its keyword
+    std::string const conjured = sPlayerbotAIConfig.conjuredItemsForGroup
+                                     ? PlayerbotAI::NormalizeConjuredRequest(text) : "";
+    if (!conjured.empty())
+        text = conjured;
 
     // If text starts with any excluded prefix, don't process it further.
     for (auto const& prefix : sPlayerbotAIConfig.tradeActionExcludedPrefixes)
@@ -31,6 +69,10 @@ bool TradeAction::Execute(Event event)
             if (guid.IsPlayer())
                 player = ObjectAccessor::FindPlayer(guid);
 
+        // a group member asking for conjured items gets them, not the master
+        if (!player && botAI->CanRequestConjuredItems(event.getOwner()) && botAI->IsConjuredItemRequest(text))
+            player = event.getOwner();
+
         if (!player && botAI->GetMaster())
             player = botAI->GetMaster();
 
@@ -39,6 +81,13 @@ bool TradeAction::Execute(Event event)
 
         if (!player->GetTrader())
         {
+            // a conjured request fills the window as soon as the player opens it (TradeStatusAction)
+            if (sPlayerbotAIConfig.conjuredItemsForGroup && botAI->IsConjuredItemRequest(text))
+            {
+                pendingRequest = text;
+                pendingFor = player->GetGUID();
+            }
+
             WorldPacket packet(CMSG_INITIATE_TRADE);
             packet << player->GetGUID();
             bot->GetSession()->HandleInitiateTradeOpcode(packet);
@@ -58,8 +107,38 @@ bool TradeAction::Execute(Event event)
 
     size_t pos = text.rfind(" ");
     int count = pos != std::string::npos ? atoi(text.substr(pos + 1).c_str()) : 1;
+    if (!conjured.empty())
+        count = 1;   // one stack
 
     std::vector<Item*> found = parseItems(text);
+
+    Player* trader = bot->GetTrader();
+    if (trader && ConjuredOnlyFor(bot, trader))
+    {
+        found.erase(std::remove_if(found.begin(), found.end(),
+                                   [](Item* item) { return !item->GetTemplate()->IsConjuredConsumable(); }),
+                    found.end());
+    }
+
+    if (!conjured.empty())
+    {
+        // a whole stack at once: the fullest one first
+        std::stable_sort(found.begin(), found.end(),
+                         [](Item* a, Item* b) { return a->GetCount() > b->GetCount(); });
+    }
+
+    if (found.empty() && trader && !conjured.empty())
+    {
+        // nothing to give yet: conjure it now, the player asks again in a moment
+        std::string const spell = ConjureSpellFor(bot, conjured);
+        if (!spell.empty() && botAI->HasSpell(spell))
+        {
+            bot->Whisper("Give me a moment to conjure some, then ask again", LANG_UNIVERSAL, trader);
+            botAI->DoSpecificAction(spell, Event(), true);
+            return true;
+        }
+    }
+
     if (found.empty())
         return false;
 
@@ -75,6 +154,18 @@ bool TradeAction::Execute(Event event)
     }
 
     return true;
+}
+
+bool TradeAction::FillPending(Player* trader)
+{
+    if (pendingRequest.empty() || !trader || trader->GetGUID() != pendingFor)
+        return false;
+
+    std::string const text = pendingRequest;
+    pendingRequest.clear();
+    pendingFor.Clear();
+
+    return Execute(Event("trade", text, trader));
 }
 
 bool TradeAction::TradeItem(Item const* item, int8 slot)

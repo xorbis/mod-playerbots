@@ -604,8 +604,11 @@ void PlayerbotAI::HandleCommand(uint32 type, std::string const& text, Player& fr
 
     std::string filtered = text;
 
-    if (!IsAllowedCommand(filtered) && !GetSecurity()->CheckLevelFor(PlayerbotSecurityLevel::PLAYERBOT_SECURITY_INVITE,
-                                                                     type != CHAT_MSG_WHISPER, &fromPlayer))
+    bool conjuredRequest = IsConjuredItemRequest(filtered) && CanRequestConjuredItems(&fromPlayer);
+
+    if (!IsAllowedCommand(filtered) && !conjuredRequest &&
+        !GetSecurity()->CheckLevelFor(PlayerbotSecurityLevel::PLAYERBOT_SECURITY_INVITE,
+                                      type != CHAT_MSG_WHISPER, &fromPlayer))
         return;
 
     if (type == CHAT_MSG_ADDON)
@@ -671,7 +674,8 @@ void PlayerbotAI::HandleCommand(uint32 type, std::string const& text, Player& fr
         return;
     }
 
-    if (!IsAllowedCommand(filtered) &&
+    conjuredRequest = IsConjuredItemRequest(filtered) && CanRequestConjuredItems(&fromPlayer);
+    if (!IsAllowedCommand(filtered) && !conjuredRequest &&
         !GetSecurity()->CheckLevelFor(PlayerbotSecurityLevel::PLAYERBOT_SECURITY_ALLOW_ALL, type != CHAT_MSG_WHISPER,
                                       &fromPlayer))
         return;
@@ -945,6 +949,30 @@ bool PlayerbotAI::IsAllowedCommand(std::string const text)
     }
 
     return false;
+}
+
+std::string PlayerbotAI::NormalizeConjuredRequest(std::string const& text)
+{
+    std::string request = text;
+    if (request.rfind("t ", 0) == 0 || request.rfind("c ", 0) == 0)
+        request = request.substr(2);
+
+    if (request == "food" || request == "conjured food")
+        return "conjured food";
+    if (request == "water" || request == "drink" || request == "conjured water" || request == "conjured drink")
+        return "conjured water";
+    if (request == "hs" || request == "healthstone")
+        return "healthstone";
+    return "";
+}
+
+bool PlayerbotAI::CanRequestConjuredItems(Player* from)
+{
+    if (!sPlayerbotAIConfig.conjuredItemsForGroup || !from || !IsRealPlayer(from))
+        return false;
+
+    Group* group = bot->GetGroup();
+    return group && group->IsMember(from->GetGUID());
 }
 
 void PlayerbotAI::HandleCommand(uint32 type, std::string const text, Player* fromPlayer)

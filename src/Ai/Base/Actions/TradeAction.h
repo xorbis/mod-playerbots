@@ -18,9 +18,14 @@ public:
     TradeAction(PlayerbotAI* botAI) : InventoryAction(botAI, "trade") {}
 
     bool Execute(Event event) override;
+    // ConjuredItemsForGroup: run the request that opened this trade window, once it is open
+    bool FillPending(Player* trader);
 
 private:
     bool TradeItem(Item const* item, int8 slot);
+
+    std::string pendingRequest;
+    ObjectGuid pendingFor;
 
     static std::map<std::string, uint32> slots;
 };

@@ -30,6 +30,14 @@ bool ExternalEventHelper::ParseChatCommand(std::string const command, Player* ow
             return true;
     }
 
+    // "water", "healthstone", ... are not item keywords the parser knows; as a conjured-item
+    // request they mean "trade me some"
+    if (sPlayerbotAIConfig.conjuredItemsForGroup && PlayerbotAI::IsConjuredItemRequest(command))
+    {
+        HandleCommand("t", command, owner);
+        return true;
+    }
+
     if (!ChatHelper::parseableItem(command))
         return false;
 

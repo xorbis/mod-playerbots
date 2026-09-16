@@ -23,6 +23,7 @@ private:
     void BeginTrade();
     void CancelTrade();
     bool CheckTrade();
+    bool ConjuredOnlyForTrader() const;
     int32 CalculateCost(Player* player, bool sell);
 };
 

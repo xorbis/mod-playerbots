@@ -398,6 +398,8 @@ public:
     bool autoTeleportForLevel;
     bool randomBotGroupNearby;
     int32 enableRandomBotTrading;
+    bool botTradeConjuredOnly;
+    bool conjuredItemsForGroup;
     uint32 tweakValue;  // Debugging config
 
     uint32 randomBotArenaTeamMaxRating;

@@ -789,6 +789,21 @@ AiPlayerbot.EnableRandomBotTrading = 1
 # Configure message prefixes which will be excluded in analysis in trade action to open trade window
 AiPlayerbot.TradeActionExcludedPrefixes = "RPLL_H_,DBMv4,{звезда} Questie,{rt1} Questie"
 
+# Bots hand real players only conjured items (mage food and water, warlock healthstones).
+# Applies when the player is not on the bot's own account: the trade window refuses any other
+# item and any gold from the bot, "t <item>" requests skip them, and the bot does not mail
+# items. Whatever the player gives the bot is not restricted.
+# Default: 0 (disabled)
+AiPlayerbot.BotTradeConjuredOnly = 0
+
+# Conjured items for the group. Any real player in the bot's group may ask for them in chat
+# ("food", "water", "hs", also with "t " in front) and the bot trades
+# with whoever asked, not only with its master. Mages grouped with a real player keep a stack of
+# conjured food and water of their highest rank and conjure more when asked while short;
+# warlocks create a healthstone when asked while they have none (their talents decide which).
+# Default: 0 (disabled)
+AiPlayerbot.ConjuredItemsForGroup = 0
+
 # Allow bots to send mail. When disabled, bots will not mail items or money in
 # response to chat commands ("send mail").
 # Default: 1 (enabled)

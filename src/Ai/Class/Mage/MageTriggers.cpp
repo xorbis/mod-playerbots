@@ -13,6 +13,18 @@
 #include "SpellAuraEffects.h"
 #include "Value.h"
 
+bool ConjuredStockTrigger::IsActive()
+{
+    if (!sPlayerbotAIConfig.conjuredItemsForGroup || !botAI->HasSpell(spell))
+        return false;
+
+    if (botAI->GetRealPlayersInGroup().empty())
+        return false;
+
+    // one stack to hand out on top of what the bot keeps for itself
+    return AI_VALUE2(uint32, "item count", item) < 20;
+}
+
 bool NoManaGemTrigger::IsActive()
 {
     static const std::vector<uint32> gemIds = {

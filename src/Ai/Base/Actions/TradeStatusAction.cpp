@@ -16,6 +16,17 @@
 #include "Playerbots.h"
 #include "RandomPlayerbotMgr.h"
 #include "SetCraftAction.h"
+#include "ObjectMgr.h"
+#include "TradeAction.h"
+
+// BotTradeConjuredOnly: a real player who is not on the bot's own account gets conjured items only
+bool TradeStatusAction::ConjuredOnlyForTrader() const
+{
+    Player* trader = bot->GetTrader();
+    return sPlayerbotAIConfig.botTradeConjuredOnly && trader && trader->GetSession() &&
+           (IsRealPlayer(trader) || IsSelfBot(trader)) &&
+           bot->GetSession()->GetAccountId() != trader->GetSession()->GetAccountId();
+}
 
 bool TradeStatusAction::Execute(Event event)
 {
@@ -131,6 +142,12 @@ bool TradeStatusAction::Execute(Event event)
         BeginTrade();
         return true;
     }
+    else if (status == TRADE_STATUS_OPEN_WINDOW)
+    {
+        // the player accepted a trade the bot started for a conjured request: put the items in
+        if (TradeAction* tradeAction = dynamic_cast<TradeAction*>(botAI->GetAiObjectContext()->GetAction("trade")))
+            return tradeAction->FillPending(trader);
+    }
     return false;
 }
 
@@ -142,6 +159,27 @@ void TradeStatusAction::BeginTrade()
 
     WorldPacket p;
     bot->GetSession()->HandleBeginTradeOpcode(p);
+
+    if (ConjuredOnlyForTrader())
+    {
+        // only what this player can actually get
+        ListItemsVisitor visitor;
+        IterateItems(&visitor);
+
+        std::ostringstream out;
+        for (auto const& [itemId, count] : visitor.items)
+        {
+            ItemTemplate const* proto = sObjectMgr->GetItemTemplate(itemId);
+            if (proto && proto->IsConjuredConsumable())
+                out << " " << chat->FormatItem(proto, count);
+        }
+
+        std::string const offer = out.str();
+        bot->Whisper(offer.empty() ? "I have nothing conjured to give you right now"
+                                   : "I can give you:" + offer,
+                     LANG_UNIVERSAL, trader);
+        return;
+    }
 
     ListItemsVisitor visitor;
     IterateItems(&visitor);
@@ -172,6 +210,28 @@ bool TradeStatusAction::CheckTrade()
     Player* trader = bot->GetTrader();
     if (!bot->GetTradeData() || !trader || !trader->GetTradeData())
         return false;
+
+    if (ConjuredOnlyForTrader())
+    {
+        for (uint32 slot = 0; slot < TRADE_SLOT_TRADED_COUNT; ++slot)
+        {
+            Item* item = bot->GetTradeData()->GetItem((TradeSlots)slot);
+            if (item && !item->GetTemplate()->IsConjuredConsumable())
+            {
+                bot->Whisper("I can only give you conjured items - not " + chat->FormatItem(item->GetTemplate()),
+                             LANG_UNIVERSAL, trader);
+                botAI->PlaySound(TEXT_EMOTE_NO);
+                return false;
+            }
+        }
+
+        if (bot->GetTradeData()->GetMoney())
+        {
+            bot->Whisper("I can only give you conjured items, not money", LANG_UNIVERSAL, trader);
+            botAI->PlaySound(TEXT_EMOTE_NO);
+            return false;
+        }
+    }
 
     if (!botAI->HasGameClientMaster() && GET_PLAYERBOT_AI(bot->GetTrader()) &&
         !IsSelfBot(bot->GetTrader()))

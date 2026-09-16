@@ -534,6 +534,12 @@ public:
     static uint32 GetMixedGearScore(Player* player, bool withBags, bool withBank, uint32 topN = 0);
     bool HasSkill(SkillType skill);
     bool IsAllowedCommand(std::string const text);
+    // "food", "water", "hs" (optionally "t "/"c " in front): a request for conjured items that
+    // any real player in the bot's group may make. Normalize gives the inventory keyword
+    // ("conjured food", "conjured water", "healthstone") or "" when the text is no such request.
+    static std::string NormalizeConjuredRequest(std::string const& text);
+    static bool IsConjuredItemRequest(std::string const& text) { return !NormalizeConjuredRequest(text).empty(); }
+    bool CanRequestConjuredItems(Player* from);
     float GetRange(std::string const type);
 
     Player* GetBot() { return bot; }

@@ -120,6 +120,8 @@ public:
         creators["icy veins on cd"] = &MageTriggerFactoryInternal::icy_veins_on_cd;
         creators["deep freeze on cd"] = &MageTriggerFactoryInternal::deep_freeze_on_cd;
         creators["no mana gem"] = &MageTriggerFactoryInternal::NoManaGem;
+        creators["conjured food stock"] = &MageTriggerFactoryInternal::conjured_food_stock;
+        creators["conjured water stock"] = &MageTriggerFactoryInternal::conjured_water_stock;
         creators["blizzard channel check"] = &MageTriggerFactoryInternal::blizzard_channel_check;
         creators["blast wave off cd"] = &MageTriggerFactoryInternal::blast_wave_off_cd;
         creators["blast wave off cd and medium aoe"] = &MageTriggerFactoryInternal::blast_wave_off_cd_and_medium_aoe;
@@ -170,6 +172,8 @@ private:
     static Trigger* icy_veins_on_cd(PlayerbotAI* botAI) { return new IcyVeinsCooldownTrigger(botAI); }
     static Trigger* deep_freeze_on_cd(PlayerbotAI* botAI) { return new DeepFreezeCooldownTrigger(botAI); }
     static Trigger* NoManaGem(PlayerbotAI* botAI) { return new NoManaGemTrigger(botAI); }
+    static Trigger* conjured_food_stock(PlayerbotAI* botAI) { return new ConjuredFoodStockTrigger(botAI); }
+    static Trigger* conjured_water_stock(PlayerbotAI* botAI) { return new ConjuredWaterStockTrigger(botAI); }
     static Trigger* blizzard_channel_check(PlayerbotAI* botAI) { return new BlizzardChannelCheckTrigger(botAI); }
     static Trigger* blast_wave_off_cd(PlayerbotAI* botAI) { return new BlastWaveOffCdTrigger(botAI); }
     static Trigger* blast_wave_off_cd_and_medium_aoe(PlayerbotAI* botAI) { return new BlastWaveOffCdTriggerAndMediumAoeTrigger(botAI); }

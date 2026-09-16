@@ -43,6 +43,15 @@ bool SendMailAction::Execute(Event event)
     if (!tellTo)
         tellTo = receiver;
 
+    // BotTradeConjuredOnly: conjured items cannot be mailed, so there is nothing a bot may mail
+    // to a player who is not on its own account
+    if (sPlayerbotAIConfig.botTradeConjuredOnly && receiver->GetSession() &&
+        (IsRealPlayer(receiver) || IsSelfBot(receiver)) && account != receiver->GetSession()->GetAccountId())
+    {
+        bot->Whisper("I can only give you conjured items, and those cannot be mailed", LANG_UNIVERSAL, tellTo);
+        return false;
+    }
+
     if (!sPlayerbotAIConfig.botSendMailEnabled)
     {
         bot->Whisper(PlayerbotTextMgr::instance().GetBotTextOrDefault(
