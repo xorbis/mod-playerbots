@@ -15,14 +15,6 @@
 
 #include <algorithm>
 
-// BotTradeConjuredOnly: a real player who is not on the bot's own account gets conjured items only
-static bool ConjuredOnlyFor(Player* bot, Player* player)
-{
-    return sPlayerbotAIConfig.botTradeConjuredOnly && player && player->GetSession() &&
-           (IsRealPlayer(player) || IsSelfBot(player)) &&
-           bot->GetSession()->GetAccountId() != player->GetSession()->GetAccountId();
-}
-
 static uint32 const CONJURED_REQUEST_MAX_CASTS = 12;    // 2 per cast at low ranks: enough for a stack
 static uint32 const CONJURED_REQUEST_TIMEOUT = 90;      // seconds before a request is dropped
 static float const CONJURED_REQUEST_TRADE_RANGE = 9.0f; // the trade distance, a bit under it

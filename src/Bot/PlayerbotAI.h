@@ -80,6 +80,8 @@ enum BotState
 
 bool IsRealPlayer(Player* player);
 bool IsSelfBot(Player* player);
+// BotTradeConjuredOnly: a real player who is not on the bot's own account gets conjured items only
+bool ConjuredOnlyFor(Player* bot, Player* player);
 bool IsAlliance(uint8 race);
 
 class PlayerbotChatHandler : protected ChatHandler

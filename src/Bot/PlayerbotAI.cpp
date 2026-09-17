@@ -3704,6 +3704,14 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target, Item* itemTarget)
 
         if (bot->GetTradeData())
         {
+            // BotTradeConjuredOnly: the spell would be cast on the item the trader offers in the trade window
+            // (an enchant paid with the bot's reagents); a player from another account gets no such service
+            if (ConjuredOnlyFor(bot, bot->GetTrader()))
+            {
+                delete spell;
+                return false;
+            }
+
             bot->GetTradeData()->SetSpell(spellId);
             delete spell;
             // if (!sPlayerbotAIConfig.logInGroupOnly || (bot->GetGroup() && HasGameClientMaster()))
@@ -3951,6 +3959,14 @@ bool PlayerbotAI::CastSpell(uint32 spellId, float x, float y, float z, Item* ite
 
         if (bot->GetTradeData())
         {
+            // BotTradeConjuredOnly: the spell would be cast on the item the trader offers in the trade window
+            // (an enchant paid with the bot's reagents); a player from another account gets no such service
+            if (ConjuredOnlyFor(bot, bot->GetTrader()))
+            {
+                delete spell;
+                return false;
+            }
+
             bot->GetTradeData()->SetSpell(spellId);
             delete spell;
             return true;
@@ -4437,6 +4453,13 @@ bool IsSelfBot(Player* player)
     // Selfbot: "player" has PlayerbotAI attached, and it has a master who is itself (player).
     PlayerbotAI* botAI = GET_PLAYERBOT_AI(player);
     return botAI && botAI->GetMaster() == player;
+}
+
+bool ConjuredOnlyFor(Player* bot, Player* player)
+{
+    return sPlayerbotAIConfig.botTradeConjuredOnly && bot && bot->GetSession() && player && player->GetSession() &&
+           (IsRealPlayer(player) || IsSelfBot(player)) &&
+           bot->GetSession()->GetAccountId() != player->GetSession()->GetAccountId();
 }
 
 bool IsAlliance(uint8 race)

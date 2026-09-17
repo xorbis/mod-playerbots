@@ -21,6 +21,14 @@ bool GuildBankAction::Execute(Event event)
         return false;
     }
 
+    // BotTradeConjuredOnly: the guild bank is a hand-over to whoever withdraws, so a master from another
+    // account gets nothing put there (conjured items cannot be banked anyway)
+    if (ConjuredOnlyFor(bot, GetMaster()))
+    {
+        botAI->TellMaster("I can only give you conjured items, and those cannot go in the guild bank");
+        return false;
+    }
+
     GuidVector gos = *botAI->GetAiObjectContext()->GetValue<GuidVector>("nearest game objects");
     for (GuidVector::iterator i = gos.begin(); i != gos.end(); ++i)
     {

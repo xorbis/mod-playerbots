@@ -146,6 +146,13 @@ bool CastCustomSpellAction::Execute(Event event)
     bool const hasItemTarget = itemTarget &&
         (spellInfo->Targets & TARGET_FLAG_ITEM || spellInfo->Targets & TARGET_FLAG_GAMEOBJECT_ITEM);
 
+    // BotTradeConjuredOnly: no enchanting the item a player from another account offers in the trade window
+    if (bot->GetTrader() && (spellInfo->Targets & TARGET_FLAG_ITEM) && ConjuredOnlyFor(bot, bot->GetTrader()))
+    {
+        botAI->TellError("I can only give you conjured items, I do not enchant your gear");
+        return false;
+    }
+
     if (bot->GetTrader())
         spellName << "trade item";
     else if (hasItemTarget)

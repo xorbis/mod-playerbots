@@ -27,9 +27,11 @@ Item* ItemForSpellValue::Calculate()
     if (!spellInfo)
         return nullptr;
 
+    // BotTradeConjuredOnly: the item a player from another account offers in the trade window is not a target
+    // for the bot's spells (enchants, oils, scrolls); the bot only casts on its own gear
     Item* itemForSpell = nullptr;
     Player* trader = bot->GetTrader();
-    if (trader)
+    if (trader && !ConjuredOnlyFor(bot, trader))
     {
         itemForSpell = trader->GetTradeData()->GetItem(TRADE_SLOT_NONTRADED);
         if (itemForSpell && itemForSpell->IsFitToSpellRequirements(spellInfo))
@@ -40,7 +42,7 @@ Item* ItemForSpellValue::Calculate()
     if (master)
     {
         trader = master->GetTrader();
-        if (trader)
+        if (trader && !ConjuredOnlyFor(bot, trader))
         {
             itemForSpell = trader->GetTradeData()->GetItem(TRADE_SLOT_NONTRADED);
             if (itemForSpell && itemForSpell->IsFitToSpellRequirements(spellInfo))

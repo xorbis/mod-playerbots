@@ -212,7 +212,7 @@ bool UseItemAction::UseItem(Item* item, ObjectGuid goGuid, Item* itemTarget, Uni
             if (itemForSpell->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
                 continue;
 
-            if (bot->GetTrader())
+            if (bot->GetTrader() && !ConjuredOnlyFor(bot, bot->GetTrader()))
             {
                 if (selfOnly)
                     return false;

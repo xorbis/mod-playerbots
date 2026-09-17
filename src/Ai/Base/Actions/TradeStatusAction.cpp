@@ -22,10 +22,7 @@
 // BotTradeConjuredOnly: a real player who is not on the bot's own account gets conjured items only
 bool TradeStatusAction::ConjuredOnlyForTrader() const
 {
-    Player* trader = bot->GetTrader();
-    return sPlayerbotAIConfig.botTradeConjuredOnly && trader && trader->GetSession() &&
-           (IsRealPlayer(trader) || IsSelfBot(trader)) &&
-           bot->GetSession()->GetAccountId() != trader->GetSession()->GetAccountId();
+    return ConjuredOnlyFor(bot, bot->GetTrader());
 }
 
 bool TradeStatusAction::Execute(Event event)

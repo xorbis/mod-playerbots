@@ -803,8 +803,10 @@ AiPlayerbot.TradeActionExcludedPrefixes = "RPLL_H_,DBMv4,{звезда} Questie,
 
 # Bots hand real players only conjured items (mage food and water, warlock healthstones).
 # Applies when the player is not on the bot's own account: the trade window refuses any other
-# item and any gold from the bot, "t <item>" requests skip them, and the bot does not mail
-# items. Whatever the player gives the bot is not restricted.
+# item and any gold from the bot, "t <item>" requests skip them, the bot does not mail items,
+# does not put items in the guild bank ("gb") for such a player, and does not enchant (or use an
+# oil, stone or scroll on) the item such a player puts in the trade window - it casts only on its
+# own gear. Whatever the player gives the bot is not restricted.
 # Default: 0 (disabled)
 AiPlayerbot.BotTradeConjuredOnly = 0
 
