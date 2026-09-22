@@ -247,13 +247,15 @@ std::vector<Item*> InventoryAction::parseItems(std::string const text, IterateIt
 
     if (text == "drink" || text == "water" || text == "conjured drink" || text == "conjured water")
     {
-        FindFoodVisitor visitor(bot, 59, text == "conjured drink" || text == "conjured water");
+        bool const conjured = text == "conjured drink" || text == "conjured water";
+        FindFoodVisitor visitor(bot, 59, conjured);
         IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
         found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
 
         if (found.empty())
         {
-            FindFoodVisitor visitor(bot, 11);
+            // no water: the food-category items that are drink too (Conjured Mana Pie and kin), not plain food
+            FindFoodVisitor visitor(bot, 11, conjured, true);
             IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
             found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
         }

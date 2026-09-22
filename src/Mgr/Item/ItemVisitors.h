@@ -354,21 +354,19 @@ private:
 class FindFoodVisitor : public FindUsableItemVisitor
 {
 public:
-    FindFoodVisitor(Player* bot, uint32 spellCategory, bool conjured = false)
-        : FindUsableItemVisitor(bot), spellCategory(spellCategory), conjured(conjured)
+    // drink: the item must restore mana as well, whatever its category (the Conjure Refreshment
+    // items are food and drink but carry the food category)
+    FindFoodVisitor(Player* bot, uint32 spellCategory, bool conjured = false, bool drink = false)
+        : FindUsableItemVisitor(bot), spellCategory(spellCategory), conjured(conjured), drink(drink)
     {
     }
 
-    bool Accept(ItemTemplate const* proto) override
-    {
-        return proto->Class == ITEM_CLASS_CONSUMABLE &&
-               (proto->SubClass == ITEM_SUBCLASS_CONSUMABLE || proto->SubClass == ITEM_SUBCLASS_FOOD) &&
-               proto->Spells[0].SpellCategory == spellCategory && (!conjured || proto->IsConjuredConsumable());
-    }
+    bool Accept(ItemTemplate const* proto) override;
 
 private:
     uint32 spellCategory;
     bool conjured;
+    bool drink;
 };
 
 class FindMountVisitor : public FindUsableItemVisitor

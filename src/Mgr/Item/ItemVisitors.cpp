@@ -37,6 +37,37 @@ bool FindPotionVisitor::Accept(ItemTemplate const* proto)
     return false;
 }
 
+// A mana regen aura on the spell, or on one it triggers (Refreshment: a food spell and a drink spell)
+static bool SpellRestoresMana(uint32 spellId, uint8 depth = 0)
+{
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    if (!spellInfo)
+        return false;
+
+    for (SpellEffectInfo const& effect : spellInfo->Effects)
+    {
+        if (effect.Effect == SPELL_EFFECT_TRIGGER_SPELL)
+        {
+            if (depth < 2 && SpellRestoresMana(effect.TriggerSpell, depth + 1))
+                return true;
+        }
+        else if (effect.Effect == SPELL_EFFECT_APPLY_AURA && effect.MiscValue == POWER_MANA &&
+                 (effect.ApplyAuraName == SPELL_AURA_MOD_POWER_REGEN || effect.ApplyAuraName == SPELL_AURA_OBS_MOD_POWER ||
+                  effect.ApplyAuraName == SPELL_AURA_PERIODIC_ENERGIZE))
+            return true;
+    }
+
+    return false;
+}
+
+bool FindFoodVisitor::Accept(ItemTemplate const* proto)
+{
+    return proto->Class == ITEM_CLASS_CONSUMABLE &&
+           (proto->SubClass == ITEM_SUBCLASS_CONSUMABLE || proto->SubClass == ITEM_SUBCLASS_FOOD) &&
+           proto->Spells[0].SpellCategory == spellCategory && (!conjured || proto->IsConjuredConsumable()) &&
+           (!drink || SpellRestoresMana(proto->Spells[0].SpellId));
+}
+
 bool FindMountVisitor::Accept(ItemTemplate const* proto)
 {
     for (uint8 j = 0; j < MAX_ITEM_PROTO_SPELLS; j++)
