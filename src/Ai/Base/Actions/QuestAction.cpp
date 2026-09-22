@@ -93,14 +93,28 @@ bool QuestAction::CompleteQuest(Player* player, uint32 entry)
         }
 
         uint32 curItemCount = player->GetItemCount(id, true);
+        if (curItemCount >= count)
+        {
+            continue;
+        }
 
         ItemPosCountVec dest;
         uint8 msg = player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, id, count - curItemCount);
-        if (msg == EQUIP_ERR_OK)
+        if (msg != EQUIP_ERR_OK)
         {
-            Item* item = player->StoreNewItem(dest, id, true);
-            player->SendNewItem(item, count - curItemCount, true, false);
+            // Do not force-complete without the items: the quest would sit flagged complete with
+            // nothing to hand in, and neither the bot nor a player on this character can turn it
+            // in then. Leaving it incomplete lets the next sync (or the character) finish it.
+            std::ostringstream out;
+            out << "Cannot complete " << ChatHelper::FormatQuest(pQuest) << ": no room for "
+                << ChatHelper::FormatItem(sObjectMgr->GetItemTemplate(id), count - curItemCount)
+                << " (inventory error " << uint32(msg) << ")";
+            botAI->TellMasterNoFacing(out);
+            return false;
         }
+
+        Item* item = player->StoreNewItem(dest, id, true);
+        player->SendNewItem(item, count - curItemCount, true, false);
     }
 
     // All creature/GO slain/casted (not required, but otherwise it will display "Creature slain 0/10")
