@@ -135,8 +135,13 @@ bool TradeAction::Execute(Event event)
         for (Item* item : found)
             have += item->GetCount();
 
-        // not a full stack yet: conjure first, the pending machinery calls back here
-        if (have < PendingTarget() && pendingCasts < CONJURED_REQUEST_MAX_CASTS &&
+        // not a full stack yet: conjure first, the pending machinery calls back here - but only
+        // when a conjure can really start and we are not already inside ContinuePending(). In
+        // combat it cannot cast, so pendingCasts never grows and it would hand straight back to
+        // us: the two would call each other until the stack ran out (a whispered "water" in a
+        // fight crashed the worldserver).
+        if (!servingPending && !bot->IsInCombat() && have < PendingTarget() &&
+            pendingCasts < CONJURED_REQUEST_MAX_CASTS &&
             ConjureSpellIdFor(bot, conjured, trader->GetLevel()))
         {
             SetPending(conjured, trader);
@@ -221,7 +226,15 @@ bool TradeAction::ContinuePending()
 
     // enough, or as much as it gets: trade
     if (Player* trader = bot->GetTrader())
-        return trader == player && Execute(Event("trade", pendingRequest, player));   // else busy: keep waiting
+    {
+        if (trader != player)
+            return false;   // busy with someone else: keep waiting
+
+        servingPending = true;   // Execute() must not send the request back here
+        bool const served = Execute(Event("trade", pendingRequest, player));
+        servingPending = false;
+        return served;
+    }
 
     if (player->GetTrader())
         return false;   // the player is trading with someone else

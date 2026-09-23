@@ -36,6 +36,7 @@ private:
     time_t pendingSince = 0;
     uint8 pendingCasts = 0;
     bool pendingTold = false;
+    bool servingPending = false;   // inside ContinuePending()'s Execute(): no bouncing back to it
 
     static std::map<std::string, uint32> slots;
 };
