@@ -131,16 +131,22 @@ bool TradeAction::Execute(Event event)
 
     if (trader && !conjured.empty())
     {
-        // only what the requester can use, a whole stack at once: the fullest one first
+        // only what the requester can use, a whole stack at once: the best rank first and the
+        // fullest of it - by stack size alone an old low-rank 20-stack went out ahead of the water
+        // the bot had just conjured for them
         found.erase(std::remove_if(found.begin(), found.end(),
                                    [trader](Item* item) { return trader->CanUseItem(item->GetTemplate()) != EQUIP_ERR_OK; }),
                     found.end());
         std::stable_sort(found.begin(), found.end(),
-                         [](Item* a, Item* b) { return a->GetCount() > b->GetCount(); });
+                         [](Item* a, Item* b)
+                         {
+                             uint32 const levelA = a->GetTemplate()->RequiredLevel;
+                             uint32 const levelB = b->GetTemplate()->RequiredLevel;
+                             return levelA != levelB ? levelA > levelB : a->GetCount() > b->GetCount();
+                         });
 
-        uint32 have = 0;
-        for (Item* item : found)
-            have += item->GetCount();
+        // the same yardstick as the pending machinery: only the rank it could conjure now counts
+        uint32 const have = UsableConjuredCount(botAI, conjured, trader);
 
         // not a full stack yet: conjure first, the pending machinery calls back here - but only
         // when a conjure can really start and we are not already inside ContinuePending(). In
@@ -224,7 +230,7 @@ bool TradeAction::ContinuePending()
         // the cast did not start (mana, bags): hand over what there is
     }
 
-    if (!UsableConjuredCount(botAI, pendingRequest, player))
+    if (!UsableConjuredCount(botAI, pendingRequest, player, false))
     {
         bot->Whisper("I cannot conjure any you could use right now", LANG_UNIVERSAL, player);
         ClearPending();

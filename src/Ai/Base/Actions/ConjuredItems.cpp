@@ -5,6 +5,7 @@
  */
 
 #include "ConjuredItems.h"
+#include "Group.h"
 #include "ItemCountValue.h"
 #include "ObjectMgr.h"
 #include "Playerbots.h"
@@ -12,6 +13,7 @@
 #include "SpellMgr.h"
 
 #include <algorithm>
+#include <utility>
 
 bool CanServeConjuredRequest(Player* bot, std::string const& request)
 {
@@ -26,10 +28,14 @@ bool CanServeConjuredRequest(Player* bot, std::string const& request)
     }
 }
 
-uint32 ConjureSpellIdFor(Player* bot, std::string const& request, uint8 forLevel)
+namespace
+{
+// The best spell for `forLevel` together with the required level of the item it makes: one scan of
+// the spellbook, so casting and telling an obsolete stack from a current one always agree.
+std::pair<uint32, uint8> BestConjureFor(Player* bot, std::string const& request, uint8 forLevel)
 {
     if (!CanServeConjuredRequest(bot, request))
-        return 0;
+        return { 0, 0 };
 
     std::vector<std::string> names;
     if (bot->getClass() == CLASS_MAGE)
@@ -80,17 +86,76 @@ uint32 ConjureSpellIdFor(Player* bot, std::string const& request, uint8 forLevel
         }
     }
 
-    return best;
+    return { best, uint8(bestLevel) };
+}
+}  // namespace
+
+uint32 ConjureSpellIdFor(Player* bot, std::string const& request, uint8 forLevel)
+{
+    return BestConjureFor(bot, request, forLevel).first;
 }
 
-uint32 UsableConjuredCount(PlayerbotAI* botAI, std::string const& request, Player* forPlayer)
+uint8 BestConjuredItemLevelFor(Player* bot, std::string const& request, uint8 forLevel)
 {
+    return BestConjureFor(bot, request, forLevel).second;
+}
+
+uint32 UsableConjuredCount(PlayerbotAI* botAI, std::string const& request, Player* forPlayer,
+                           bool bestRankOnly)
+{
+    // "stocked" means stocked with the rank the bot could make for that player: counting the weaker
+    // ranks too left a bot sitting on an old stack satisfied, so it never conjured the rank the
+    // player should get and handed the old one over instead. bestRankOnly = false asks the other
+    // question - is there anything at all it could hand over.
+    uint8 const bestLevel = forPlayer && bestRankOnly
+                                ? BestConjuredItemLevelFor(botAI->GetBot(), request, forPlayer->GetLevel())
+                                : 0;
+
     uint32 count = 0;
     for (Item* item : botAI->GetAiObjectContext()->GetValue<std::vector<Item*>>("inventory items", request)->Get())
-        if (!forPlayer || forPlayer->CanUseItem(item->GetTemplate()) == EQUIP_ERR_OK)
+    {
+        ItemTemplate const* proto = item->GetTemplate();
+        if (proto->RequiredLevel < bestLevel)
+            continue;
+
+        if (!forPlayer || forPlayer->CanUseItem(proto) == EQUIP_ERR_OK)
             count += item->GetCount();
+    }
 
     return count;
+}
+
+void DropObsoleteConjured(PlayerbotAI* botAI, std::string const& request, uint8 keepFromLevel)
+{
+    if (!keepFromLevel)
+        return;
+
+    Player* bot = botAI->GetBot();
+
+    // only when the better rank is one every group member could use as well, so this never takes
+    // the last thing a lower-level member can drink
+    if (Group* group = bot->GetGroup())
+        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+            if (Player* member = ref->GetSource())
+                if (member->GetLevel() < keepFromLevel)
+                    return;
+
+    std::vector<std::pair<uint32, uint32>> obsolete;
+    uint32 current = 0;
+    for (Item* item : botAI->GetAiObjectContext()->GetValue<std::vector<Item*>>("inventory items", request)->Get())
+    {
+        if (item->GetTemplate()->RequiredLevel < keepFromLevel)
+            obsolete.emplace_back(item->GetEntry(), item->GetCount());
+        else
+            current += item->GetCount();
+    }
+
+    // nothing of the current rank in the bags yet: keep what there is rather than leave the group dry
+    if (!current || obsolete.empty())
+        return;
+
+    for (auto const& [itemId, count] : obsolete)
+        bot->DestroyItemCount(itemId, count, true);
 }
 
 uint8 LowestRealPlayerLevelInGroup(PlayerbotAI* botAI)
@@ -115,5 +180,11 @@ bool ConjureForGroupAction::Execute(Event /*event*/)
         return false;
 
     uint32 const spellId = ConjureSpellIdFor(bot, request, level);
-    return spellId && botAI->CastSpell(spellId, bot);
+    if (!spellId)
+        return false;
+
+    // the weaker stacks are dead weight once the current rank is in the bags
+    DropObsoleteConjured(botAI, request, BestConjuredItemLevelFor(bot, request, level));
+
+    return botAI->CastSpell(spellId, bot);
 }

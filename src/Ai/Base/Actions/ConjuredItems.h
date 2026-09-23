@@ -25,8 +25,19 @@ bool CanServeConjuredRequest(Player* bot, std::string const& request);
 // warlock healthstone (the rank's item follows the core's spell_warl_create_healthstone table).
 uint32 ConjureSpellIdFor(Player* bot, std::string const& request, uint8 forLevel);
 
-// How many of `request` the bot carries that `forPlayer` can use.
-uint32 UsableConjuredCount(PlayerbotAI* botAI, std::string const& request, Player* forPlayer);
+// Required level of the item ConjureSpellIdFor's spell makes, 0 when there is none: the yardstick
+// for "as good as this bot can make for that player".
+uint8 BestConjuredItemLevelFor(Player* bot, std::string const& request, uint8 forLevel);
+
+// How many of `request` the bot carries that `forPlayer` can use and that are no worse than the
+// rank it could conjure for them - every rank it carries with bestRankOnly = false, or when
+// forPlayer is null.
+uint32 UsableConjuredCount(PlayerbotAI* botAI, std::string const& request, Player* forPlayer,
+                           bool bestRankOnly = true);
+
+// Destroy the `request` stacks weaker than `keepFromLevel`, once the bot holds some of that rank
+// and no group member is too low to use it.
+void DropObsoleteConjured(PlayerbotAI* botAI, std::string const& request, uint8 keepFromLevel);
 
 // The lowest level among the real players in the bot's group, 0 without one.
 uint8 LowestRealPlayerLevelInGroup(PlayerbotAI* botAI);

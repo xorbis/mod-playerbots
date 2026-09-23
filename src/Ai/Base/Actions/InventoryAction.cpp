@@ -252,9 +252,12 @@ std::vector<Item*> InventoryAction::parseItems(std::string const text, IterateIt
         IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
         found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
 
-        if (found.empty())
+        // the food-category items that are drink too (Conjured Mana Pie and kin), not plain food.
+        // For the conjured keywords they belong in the list whatever else is in the bags: from 74
+        // on Conjure Refreshment is the only water a mage makes, and hiding it behind a leftover
+        // low-rank stack made the bot conjure pies it never counted and hand the old water over.
+        if (conjured || found.empty())
         {
-            // no water: the food-category items that are drink too (Conjured Mana Pie and kin), not plain food
             FindFoodVisitor visitor(bot, 11, conjured, true);
             IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
             found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
