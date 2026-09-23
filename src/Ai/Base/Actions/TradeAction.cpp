@@ -50,7 +50,14 @@ bool TradeAction::Execute(Event event)
     std::string const conjured = sPlayerbotAIConfig.conjuredItemsForGroup
                                      ? PlayerbotAI::NormalizeConjuredRequest(text) : "";
     if (!conjured.empty())
+    {
+        // said in party chat it reaches every bot in the group: only the class that makes the
+        // thing answers, the others leave it alone - no trade window, no whisper back
+        if (!CanServeConjuredRequest(bot, conjured))
+            return false;
+
         text = conjured;
+    }
 
     // If text starts with any excluded prefix, don't process it further.
     for (auto const& prefix : sPlayerbotAIConfig.tradeActionExcludedPrefixes)

@@ -13,15 +13,29 @@
 
 #include <algorithm>
 
+bool CanServeConjuredRequest(Player* bot, std::string const& request)
+{
+    switch (bot->getClass())
+    {
+        case CLASS_MAGE:
+            return request == "conjured food" || request == "conjured water";
+        case CLASS_WARLOCK:
+            return request == "healthstone";
+        default:
+            return false;
+    }
+}
+
 uint32 ConjureSpellIdFor(Player* bot, std::string const& request, uint8 forLevel)
 {
-    std::vector<std::string> names;
-    if (bot->getClass() == CLASS_MAGE && (request == "conjured food" || request == "conjured water"))
-        names = { "conjure refreshment", request == "conjured food" ? "conjure food" : "conjure water" };
-    else if (bot->getClass() == CLASS_WARLOCK && request == "healthstone")
-        names = { "create healthstone" };
-    else
+    if (!CanServeConjuredRequest(bot, request))
         return 0;
+
+    std::vector<std::string> names;
+    if (bot->getClass() == CLASS_MAGE)
+        names = { "conjure refreshment", request == "conjured food" ? "conjure food" : "conjure water" };
+    else
+        names = { "create healthstone" };
 
     // Create Healthstone rank -> item, first column of spell_warl_create_healthstone::iTypes in
     // the core (the Improved Healthstone variants share the required level)

@@ -15,6 +15,11 @@ class PlayerbotAI;
 // ConjuredItemsForGroup helpers. A "request" is the normalized keyword from
 // PlayerbotAI::NormalizeConjuredRequest: "conjured food", "conjured water" or "healthstone".
 
+// Whether this bot's class is the one that makes `request` at all: a mage for food and water,
+// a warlock for healthstones. A request said in party chat reaches every bot in the group, so
+// the ones that cannot make it must leave it alone rather than answer.
+bool CanServeConjuredRequest(Player* bot, std::string const& request);
+
 // Highest rank of the spell that makes `request` this bot knows whose item a level `forLevel`
 // player can use; 0 when there is none. Mage food/water (Conjure Refreshment from 74 on),
 // warlock healthstone (the rank's item follows the core's spell_warl_create_healthstone table).
