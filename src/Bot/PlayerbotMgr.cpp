@@ -243,6 +243,10 @@ void PlayerbotHolder::HandlePlayerBotLoginCallback(PlayerbotLoginQueryHolder con
     WorldSession* botSession =
         new WorldSession(botAccountId, "", 0x0, nullptr, SEC_PLAYER, EXPANSION_WRATH_OF_THE_LICH_KING, time_t(0),
                          sWorld->GetDefaultDbcLocale(), 0, false, false, 0, true);
+    // XorWoW: a player's own character played by the bot AI shows as "Name@" to the other players, a
+    // random or addclass bot as "Name*" (core default). Set before the login puts the bot in the world.
+    if (!sPlayerbotAIConfig.IsInRandomAccountList(botAccountId))
+        botSession->SetBotNameMark('@');
 
     botSession->HandlePlayerLoginFromDB(holder);  // will delete lqh
 
