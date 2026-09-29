@@ -149,6 +149,11 @@ void SellAction::Sell(FindItemVisitor* visitor)
 
 void SellAction::Sell(Item* item)
 {
+    // XorWoW: no vendor price, no sale - the vendor refuses it anyway (Argent Dawn Commission,
+    // quest keepsakes), and "s green" and the like would announce selling it
+    if (!item->GetTemplate()->SellPrice)
+        return;
+
     std::ostringstream out;
 
     GuidVector vendors = botAI->GetAiObjectContext()->GetValue<GuidVector>("nearest npcs")->Get();
