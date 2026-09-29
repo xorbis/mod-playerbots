@@ -17,7 +17,7 @@
  *                                  <points spec 2>;<dead>;<ghost>;<follow|stay|free>;<loot strategy>;
  *                                  <looting on>, then the strategies in chunks BSC;<a,b,...> (combat)
  *                                  and BSN (non-combat), then BSE;<bot>
- *   bags;<bot>                     BBS;<bot>;<money>;<conjured only>, BB;<bag>;<slot>;<item string>;
+ *   bags;<bot>                     BBS;<bot>;<money>;<conjured only>;<free slots>;<slots>, BB;<bag>;<slot>;<item string>;
  *                                  <count>;<flags> per item (1 tradable, 2 soulbound, 4 in the trade,
  *                                  8 quest item, 16 conjured, 32 the bot can wear it, 64 a vendor buys
  *                                  it), BE;<equipment slot>;<item string>;<flags> per worn item,
@@ -294,7 +294,22 @@ namespace
     void SendBags(Player* player, Player* bot)
     {
         bool const conjuredOnly = ConjuredOnlyFor(bot, player);
-        Send(player, Acore::StringFormat("BBS;{};{};{}", bot->GetName(), bot->GetMoney(), conjuredOnly ? 1 : 0));
+
+        // the bag space: the backpack and every bag it carries (not the keyring)
+        uint32 total = INVENTORY_SLOT_ITEM_END - INVENTORY_SLOT_ITEM_START;
+        uint32 used = 0;
+        for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
+            if (bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
+                ++used;
+        for (uint8 bagSlot = INVENTORY_SLOT_BAG_START; bagSlot < INVENTORY_SLOT_BAG_END; ++bagSlot)
+            if (Bag* bag = bot->GetBagByPos(bagSlot))
+            {
+                total += bag->GetBagSize();
+                used += bag->GetBagSize() - bag->GetFreeSlots();
+            }
+
+        Send(player, Acore::StringFormat("BBS;{};{};{};{};{}", bot->GetName(), bot->GetMoney(), conjuredOnly ? 1 : 0,
+                                         total - used, total));
 
         for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
             if (Item* item = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
