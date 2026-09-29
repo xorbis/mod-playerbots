@@ -18,6 +18,7 @@
 #include "SetCraftAction.h"
 #include "ObjectMgr.h"
 #include "TradeAction.h"
+#include "XorWoWBotPanel.h"
 
 // BotTradeConjuredOnly: a real player who is not on the bot's own account gets conjured items only
 bool TradeStatusAction::ConjuredOnlyForTrader() const
@@ -177,6 +178,10 @@ void TradeStatusAction::BeginTrade()
                      LANG_UNIVERSAL, trader);
         return;
     }
+
+    // the XorWoW addon shows the bags beside the trade window instead
+    if (XorWoWBotPanelActive(trader))
+        return;
 
     ListItemsVisitor visitor;
     IterateItems(&visitor);

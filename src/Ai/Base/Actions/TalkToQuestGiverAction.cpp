@@ -14,6 +14,7 @@
 #include "QuestDef.h"
 #include "StatsWeightCalculator.h"
 #include "WorldPacket.h"
+#include "XorWoWBotPanel.h"
 
 bool TalkToQuestGiverAction::ProcessQuest(Quest const* quest, Object* questGiver)
 {
@@ -169,6 +170,15 @@ ItemIds TalkToQuestGiverAction::BestRewards(Quest const* quest)
 void TalkToQuestGiverAction::RewardMultipleItem(Quest const* quest, Object* questGiver, std::ostringstream& out)
 {
     std::set<uint32> bestIds;
+
+    // XorWoW: the master's addon shows the choices in its quest panel and sends the pick back
+    // ("reward", XorWoWBotPanel.cpp) - the bot leaves it to them instead of picking
+    if (botAI->IsAltBot() && XorWoWBotPanelActive(GetMaster()))
+    {
+        XorWoWBotPanelRewardPending(GetMaster(), bot, quest->GetQuestId());
+        out << "Reward pending - choose it in the quest panel";
+        return;
+    }
 
     std::ostringstream outid;
     if (!botAI->IsAltBot() || sPlayerbotAIConfig.autoPickReward == "yes")
