@@ -52,6 +52,7 @@
 #include "ChatHelper.h"
 #include "Creature.h"
 #include "GameObject.h"
+#include "Group.h"
 #include "LootObjectStack.h"
 #include "DBCStores.h"
 #include "DataMap.h"
@@ -205,6 +206,14 @@ namespace
             Error(player, "You cannot control bots yet");
             return;
         }
+
+        // removed: out of the player's group first - logged out, a bot stays in it as an offline
+        // member (done here: the client cannot uninvite a name it shows with the " @" mark)
+        if (command == "remove")
+            if (Player* bot = OwnBot(player, name))
+                if (Group* group = bot->GetGroup())
+                    if (group->IsMember(player->GetGUID()))
+                        group->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
 
         std::string args = command + " " + name;   // HandlePlayerbotCommand cuts it up in place
         ChatHandler handler(player->GetSession());
