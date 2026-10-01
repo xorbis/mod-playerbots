@@ -93,7 +93,9 @@ bool CheckMountStateAction::Execute(Event /*event*/)
         float combatReach = bot->GetCombatReach() + currentTarget->GetCombatReach();
         float distanceToTarget = bot->GetExactDist(currentTarget);
 
-        shouldDismount = (distanceToTarget <= dismountDistance + combatReach);
+        // XorWoW: aggro alone does not dismount an altbot riding with its master; it gets down when the master
+        // does (ShouldDismountForMaster below) or when knocked off its mount
+        shouldDismount = (distanceToTarget <= dismountDistance + combatReach) && !RidesWithMaster(botAI);
         shouldMount = (distanceToTarget > mountDistance + combatReach);
     }
     else
@@ -288,6 +290,22 @@ void CheckMountStateAction::CompleteDismount(Player* bot)
     // Re-anchor at the ground: Player::IsFalling() compares standing Z to this, so startZ reads as a fall.
     bot->SetFallInformation(0, groundZ);
     bot->RemoveUnitMovementFlag(MOVEMENTFLAG_FALLING | MOVEMENTFLAG_FALLING_FAR);
+}
+
+bool CheckMountStateAction::RidesWithMaster(PlayerbotAI* botAI)
+{
+    Player* bot = botAI->GetBot();
+    Player* master = botAI->GetMaster();
+    if (!master || master == bot || !master->IsInWorld() || bot->InBattleground() || !botAI->IsAltBot())
+        return false;
+
+    auto riding = [](Player* player)
+    {
+        ShapeshiftForm form = player->GetShapeshiftForm();
+        return player->IsMounted() || form == FORM_TRAVEL || form == FORM_FLIGHT || form == FORM_FLIGHT_EPIC;
+    };
+
+    return riding(bot) && riding(master);
 }
 
 bool CheckMountStateAction::TryForms(Player* master, int32 masterMountType, int32 masterSpeed) const

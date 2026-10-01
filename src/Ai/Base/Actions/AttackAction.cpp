@@ -5,6 +5,7 @@
  */
 
 #include "AttackAction.h"
+#include "CheckMountStateAction.h"
 #include "CreatureAI.h"
 #include "Event.h"
 #include "LastMovementValue.h"
@@ -160,6 +161,17 @@ bool AttackAction::Attack(Unit* target, bool /*with_pet*/ /*true*/)
         if (verbose)
             botAI->TellError(PlayerbotTextMgr::instance().GetBotTextOrDefault(
                 "attack_invalid_target_error", "I cannot attack an invalid target.", {}));
+
+        return false;
+    }
+
+    // XorWoW: an altbot riding with its master keeps following it instead of fighting; it fights once the master
+    // dismounts or it gets knocked off its mount
+    if (CheckMountStateAction::RidesWithMaster(botAI))
+    {
+        if (verbose)
+            botAI->TellError(PlayerbotTextMgr::instance().GetBotTextOrDefault(
+                "attack_riding_with_master_error", "I stay mounted while you ride. Dismount and I will fight.", {}));
 
         return false;
     }
