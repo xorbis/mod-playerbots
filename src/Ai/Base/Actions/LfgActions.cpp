@@ -16,6 +16,31 @@
 
 using namespace lfg;
 
+// Dungeons (and Raid Browser raids) real players are queued for that this bot may join
+static void GetLfgCandidates(Player* bot, LfgDungeonSet& dungeons, LfgDungeonSet& raids)
+{
+    std::vector<uint32> queued = RandomPlayerbotMgr::instance().LfgDungeons[bot->GetTeamId()];
+    for (uint32 id : queued)
+    {
+        LFGDungeonEntry const* dungeon = sLFGDungeonStore.LookupEntry(id);
+        if (!dungeon || (dungeon->TypeID != LFG_TYPE_RANDOM && dungeon->TypeID != LFG_TYPE_DUNGEON &&
+                         dungeon->TypeID != LFG_TYPE_HEROIC && dungeon->TypeID != LFG_TYPE_RAID))
+            continue;
+
+        auto const& botLevel = bot->GetLevel();
+
+        /*LFG_TYPE_RANDOM on classic is 15-58 so bot over level 25 will never queue*/
+        if ((dungeon->MinLevel && (botLevel < dungeon->MinLevel || botLevel > dungeon->MaxLevel)) ||
+            (botLevel > dungeon->MinLevel + 10 && dungeon->TypeID == LFG_TYPE_DUNGEON))
+            continue;
+
+        if (dungeon->TypeID == LFG_TYPE_RAID)
+            raids.insert(dungeon->ID);
+        else
+            dungeons.insert(dungeon->ID);
+    }
+}
+
 bool LfgJoinAction::Execute(Event /*event*/) { return JoinLFG(); }
 
 uint32 LfgJoinAction::GetRoles()
@@ -98,34 +123,13 @@ bool LfgJoinAction::JoinLFG()
     bool rbotAId = !heroic && (urand(0, 100) < 50 && visitor.count[ITEM_QUALITY_EPIC] >= 5 &&
                                (bot->GetLevel() == 60 || bot->GetLevel() == 70 || bot->GetLevel() == 80));*/
 
-    LfgDungeonSet list;
-    std::vector<uint32> selected;
+    LfgDungeonSet dungeons;
+    LfgDungeonSet raids;
+    GetLfgCandidates(bot, dungeons, raids);
 
-    std::vector<uint32> dungeons = RandomPlayerbotMgr::instance().LfgDungeons[bot->GetTeamId()];
-    if (!dungeons.size())
-        return false;
-
-    for (std::vector<uint32>::iterator i = dungeons.begin(); i != dungeons.end(); ++i)
-    {
-        LFGDungeonEntry const* dungeon = sLFGDungeonStore.LookupEntry(*i);
-        if (!dungeon || (dungeon->TypeID != LFG_TYPE_RANDOM && dungeon->TypeID != LFG_TYPE_DUNGEON &&
-                         dungeon->TypeID != LFG_TYPE_HEROIC && dungeon->TypeID != LFG_TYPE_RAID))
-            continue;
-
-        auto const& botLevel = bot->GetLevel();
-
-        /*LFG_TYPE_RANDOM on classic is 15-58 so bot over level 25 will never queue*/
-        if ((dungeon->MinLevel && (botLevel < dungeon->MinLevel || botLevel > dungeon->MaxLevel)) ||
-            (botLevel > dungeon->MinLevel + 10 && dungeon->TypeID == LFG_TYPE_DUNGEON))
-            continue;
-
-        selected.push_back(dungeon->ID);
-        list.insert(dungeon->ID);
-    }
-
-    if (!selected.size())
-        return false;
-
+    // The core refuses a join that mixes raids and dungeons (LFG_JOIN_MIXED_RAID_DUNGEON):
+    // pick one side. Raids put the bot in the Raid Browser for the player raid leader to invite.
+    LfgDungeonSet const& list = raids.empty() || (!dungeons.empty() && urand(0, 1)) ? dungeons : raids;
     if (list.empty())
         return false;
 
@@ -270,8 +274,25 @@ bool LfgLeaveAction::Execute(Event /*event*/)
     // if (botAI->HasStrategy("lfg", BOT_STATE_NON_COMBAT))
     //    return false;
 
+    LfgState state = sLFGMgr->GetState(bot->GetGUID());
+
+    // Leave the Raid Browser once no player lists a raid this bot could still join
+    // (raid formed, listing removed). Joining a group already takes the bot out of it.
+    if (state == LFG_STATE_RAIDBROWSER)
+    {
+        LfgDungeonSet dungeons;
+        LfgDungeonSet raids;
+        GetLfgCandidates(bot, dungeons, raids);
+        if (sPlayerbotAIConfig.randomBotJoinLfg && !raids.empty())
+            return false;
+
+        WorldPacket* packet = new WorldPacket(CMSG_LFG_LEAVE);
+        bot->GetSession()->QueuePacket(packet);
+        return true;
+    }
+
     // Don't leave if already invited / in dungeon
-    if (sLFGMgr->GetState(bot->GetGUID()) > LFG_STATE_QUEUED)
+    if (state > LFG_STATE_QUEUED)
         return false;
 
     // Don't drop a queue we deliberately joined. The "seldom" tick (RandomTrigger, ~300s)

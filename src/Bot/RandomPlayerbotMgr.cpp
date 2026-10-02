@@ -1296,6 +1296,12 @@ void RandomPlayerbotMgr::CheckLfgQueue()
                 LfgDungeons[player->GetTeamId()].push_back(dungeon->id);
             }
         }
+
+        // XorWoW: a Raid Browser listing (solo or as raid leader) is kept per player, outside
+        // the selected-dungeon list above; add its raids so bots list themselves for them too
+        if (sLFGMgr->GetState(player->GetGUID()) == lfg::LFG_STATE_RAIDBROWSER)
+            for (uint32 dungeonId : sLFGMgr->GetRaidBrowserDungeons(player->GetGUID(), player->GetTeamId()))
+                LfgDungeons[player->GetTeamId()].push_back(dungeonId);
     }
 
     LOG_DEBUG("playerbots", "LFG Queue check finished");
