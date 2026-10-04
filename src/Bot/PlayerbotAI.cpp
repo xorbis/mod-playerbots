@@ -5576,8 +5576,29 @@ Item* PlayerbotAI::FindOpenableItem() const
     return FindItemInInventory(
         [this](ItemTemplate const* itemTemplate) -> bool
         {
-            return itemTemplate->HasFlag(ITEM_FLAG_HAS_LOOT) &&
-                   (itemTemplate->LockID == 0 || !this->bot->GetItemByEntry(itemTemplate->ItemId)->IsLocked());
+            if (!itemTemplate->HasFlag(ITEM_FLAG_HAS_LOOT))
+                return false;
+
+            Item* item = this->bot->GetItemByEntry(itemTemplate->ItemId);
+            if (!item || (itemTemplate->LockID != 0 && item->IsLocked()))
+                return false;
+
+            // XorWoW: a container already opened whose remaining loot cannot be stored (e.g. Logistics Assignment
+            // holding a unique Briefing the bot already has) stays in the bags; don't reopen it on every item push.
+            if (!item->m_lootGenerated || item->loot.gold > 0)
+                return true;
+
+            for (std::vector<LootItem> const* lootItems : {&item->loot.items, &item->loot.quest_items})
+                for (LootItem const& lootItem : *lootItems)
+                {
+                    ItemPosCountVec dest;
+                    if (!lootItem.is_looted &&
+                        this->bot->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, lootItem.itemid, lootItem.count) ==
+                            EQUIP_ERR_OK)
+                        return true;
+                }
+
+            return false;
         });
 }
 
