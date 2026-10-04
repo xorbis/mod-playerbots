@@ -338,6 +338,17 @@ AiPlayerbot.LootRollRecipe = 0
 # Default: 0 (disabled)
 AiPlayerbot.LootRollDisenchant = 0
 
+# Inside dungeons and raids, bots leave keys (item class Key: Crescent Key, Viewing Room Key,
+# Gordok keys, Shadowforge Key...) on the corpse or chest for the players and pass on them in rolls,
+# because a bot carrying one cannot be made to open the door.
+# Items on the bot's "always loot" list (ll +[item]) are still looted.
+# Default: 1 (enabled)
+AiPlayerbot.PlayerOnlyDungeonKeys = 1
+
+# More item IDs bots leave for the players inside dungeons and raids, whatever their item class
+# Default: 11885 (Shadowforge Torch, lights the Lyceum braziers in Blackrock Depths)
+AiPlayerbot.PlayerOnlyDungeonItems = 11885
+
 # A list of GameObject GUIDs that bots will not interact with.
 # List of default GUIDs:
 # QuestItems:

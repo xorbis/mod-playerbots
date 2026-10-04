@@ -375,6 +375,8 @@ public:
     bool lootGreedRollLevel;
     bool lootRollRecipe;
     bool lootRollDisenchant;
+    bool playerOnlyDungeonKeys;
+    std::vector<uint32> playerOnlyDungeonItems;
     std::string autoPickReward;
     bool autoEquipUpgradeLoot;
     float equipUpgradeThreshold;

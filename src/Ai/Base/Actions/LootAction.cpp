@@ -483,6 +483,17 @@ bool StoreLootAction::IsLootAllowed(uint32 itemid, PlayerbotAI* botAI)
     if (lootItems.find(itemid) != lootItems.end())
         return true;
 
+    // XorWoW: dungeon keys and door items stay with the players, a bot cannot be made to use them
+    if (botAI->GetBot()->GetMap()->IsDungeon())
+    {
+        if (sPlayerbotAIConfig.playerOnlyDungeonKeys && proto->Class == ITEM_CLASS_KEY)
+            return false;
+
+        std::vector<uint32> const& playerOnly = sPlayerbotAIConfig.playerOnlyDungeonItems;
+        if (std::find(playerOnly.begin(), playerOnly.end(), itemid) != playerOnly.end())
+            return false;
+    }
+
     uint32 max = proto->MaxCount;
     if (max > 0 && botAI->GetBot()->HasItemCount(itemid, max, true))
         return false;
