@@ -43,7 +43,7 @@ public:
     bool Mount();
 
     static void CompleteDismount(Player* bot);
-    // XorWoW: an altbot riding (mount or travel/flight form) with its riding master stays mounted through aggro
+    // XorWoW: a bot riding (mount or travel/flight form) with its riding player master stays mounted through aggro
     static bool RidesWithMaster(PlayerbotAI* botAI);
     static void LoadPreferredMounts();
 

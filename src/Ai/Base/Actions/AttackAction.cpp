@@ -165,7 +165,7 @@ bool AttackAction::Attack(Unit* target, bool /*with_pet*/ /*true*/)
         return false;
     }
 
-    // XorWoW: an altbot riding with its master keeps following it instead of fighting; it fights once the master
+    // XorWoW: a bot riding with its player master keeps following it instead of fighting; it fights once the master
     // dismounts or it gets knocked off its mount
     if (CheckMountStateAction::RidesWithMaster(botAI))
     {

@@ -93,8 +93,8 @@ bool CheckMountStateAction::Execute(Event /*event*/)
         float combatReach = bot->GetCombatReach() + currentTarget->GetCombatReach();
         float distanceToTarget = bot->GetExactDist(currentTarget);
 
-        // XorWoW: aggro alone does not dismount an altbot riding with its master; it gets down when the master
-        // does (ShouldDismountForMaster below) or when knocked off its mount
+        // XorWoW: aggro alone does not dismount a bot (altbot or grouped random bot) riding with its player master;
+        // it gets down when the master does (ShouldDismountForMaster below) or when knocked off its mount
         shouldDismount = (distanceToTarget <= dismountDistance + combatReach) && !RidesWithMaster(botAI);
         shouldMount = (distanceToTarget > mountDistance + combatReach);
     }
@@ -296,7 +296,7 @@ bool CheckMountStateAction::RidesWithMaster(PlayerbotAI* botAI)
 {
     Player* bot = botAI->GetBot();
     Player* master = botAI->GetMaster();
-    if (!master || master == bot || !master->IsInWorld() || bot->InBattleground() || !botAI->IsAltBot())
+    if (!master || master == bot || !master->IsInWorld() || bot->InBattleground() || !botAI->HasGameClientMaster())
         return false;
 
     auto riding = [](Player* player)
