@@ -294,6 +294,9 @@ bool BroadcastHelper::BroadcastQuestUpdateAddKill(PlayerbotAI* ai, Player* bot, 
 {
     if (!sPlayerbotAIConfig.enableBroadcasts)
         return false;
+    // XorWoW: only altbots report quest progress
+    if (sRandomPlayerbotMgr.IsRandomBot(bot))
+        return false;
     std::map<std::string, std::string> placeholders;
     AreaTableEntry const* current_area = ai->GetCurrentArea();
     AreaTableEntry const* current_zone = ai->GetCurrentZone();
@@ -334,6 +337,9 @@ bool BroadcastHelper::BroadcastQuestUpdateAddKill(PlayerbotAI* ai, Player* bot, 
 bool BroadcastHelper::BroadcastQuestUpdateAddItem(PlayerbotAI* ai, Player* bot, Quest const* quest, uint32 availableCount, uint32 requiredCount, ItemTemplate const* proto)
 {
     if (!sPlayerbotAIConfig.enableBroadcasts)
+        return false;
+    // XorWoW: only altbots report quest progress
+    if (sRandomPlayerbotMgr.IsRandomBot(bot))
         return false;
     std::map<std::string, std::string> placeholders;
     AreaTableEntry const* current_area = ai->GetCurrentArea();
@@ -377,6 +383,9 @@ bool BroadcastHelper::BroadcastQuestUpdateFailedTimer(PlayerbotAI* ai, Player* b
 {
     if (!sPlayerbotAIConfig.enableBroadcasts)
         return false;
+    // XorWoW: only altbots report quest progress
+    if (sRandomPlayerbotMgr.IsRandomBot(bot))
+        return false;
     if (urand(1, sPlayerbotAIConfig.broadcastChanceMaxValue) <= sPlayerbotAIConfig.broadcastChanceQuestUpdateFailedTimer)
     {
         std::map<std::string, std::string> placeholders;
@@ -402,6 +411,9 @@ bool BroadcastHelper::BroadcastQuestUpdateFailedTimer(PlayerbotAI* ai, Player* b
 bool BroadcastHelper::BroadcastQuestUpdateComplete(PlayerbotAI* ai, Player* bot, Quest const* quest)
 {
     if (!sPlayerbotAIConfig.enableBroadcasts)
+        return false;
+    // XorWoW: only altbots report quest progress
+    if (sRandomPlayerbotMgr.IsRandomBot(bot))
         return false;
     if (urand(1, sPlayerbotAIConfig.broadcastChanceMaxValue) <= sPlayerbotAIConfig.broadcastChanceQuestUpdateComplete)
     {

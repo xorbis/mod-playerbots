@@ -301,7 +301,8 @@ bool QuestUpdateCompleteAction::Execute(Event event)
             //     bot->Say("Quest [ " + format + " ] completed", LANG_UNIVERSAL);
             // }
         const auto format = ChatHelper::FormatQuest(qInfo);
-        if (botAI->GetMaster())
+        // XorWoW: only altbots report quest progress
+        if (botAI->GetMaster() && !sRandomPlayerbotMgr.IsRandomBot(bot))
             botAI->TellMasterNoFacing("Quest completed " + format);
         BroadcastHelper::BroadcastQuestUpdateComplete(botAI, bot, qInfo);
         botAI->rpgStatistic.questCompleted++;
@@ -332,7 +333,7 @@ bool QuestUpdateAddKillAction::Execute(Event event)
         {
             std::string infoName = botAI->GetLocalizedGameObjectName(entry);
             BroadcastHelper::BroadcastQuestUpdateAddKill(botAI, bot, qInfo, available, required, infoName);
-            if (botAI->GetMaster())
+            if (botAI->GetMaster() && !sRandomPlayerbotMgr.IsRandomBot(bot))
             {
                 std::ostringstream out;
                 out << infoName << " " << available << "/" << required << " " << ChatHelper::FormatQuest(qInfo);
@@ -347,7 +348,7 @@ bool QuestUpdateAddKillAction::Execute(Event event)
         {
             std::string infoName = botAI->GetLocalizedCreatureName(entry);
             BroadcastHelper::BroadcastQuestUpdateAddKill(botAI, bot, qInfo, available, required, infoName);
-            if (botAI->GetMaster())
+            if (botAI->GetMaster() && !sRandomPlayerbotMgr.IsRandomBot(bot))
             {
                 std::ostringstream out;
                 out << infoName << " " << available << "/" << required << " " << ChatHelper::FormatQuest(qInfo);
@@ -429,7 +430,7 @@ bool QuestItemPushResultAction::Execute(Event event)
             int32 previousCount = itemCount - count;
             if (itemId == itemEntry && uint32(previousCount) < quest->RequiredItemCount[i])
             {
-                if (botAI->GetMaster())
+                if (botAI->GetMaster() && !sRandomPlayerbotMgr.IsRandomBot(bot))
                 {
                     std::string itemLink = ChatHelper::FormatItem(proto);
                     std::ostringstream out;
