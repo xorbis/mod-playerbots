@@ -39,6 +39,13 @@ private:
     bool CanOpenLock(uint32 skillId, uint32 reqSkillValue);
 };
 
+// XorWoW: TCG cards (items 261001-261999, xorwow_tcg.cpp in the core) stay with the players: bots
+// never loot them and always pass on them, wherever they drop.
+inline bool IsXorWoWTcgCard(uint32 itemId)
+{
+    return itemId > 261000 && itemId < 262000;
+}
+
 class StoreLootAction : public InventoryAction
 {
 public:

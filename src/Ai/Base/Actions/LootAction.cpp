@@ -479,6 +479,9 @@ bool StoreLootAction::IsLootAllowed(uint32 itemid, PlayerbotAI* botAI)
     if (!proto)
         return false;
 
+    if (IsXorWoWTcgCard(itemid))
+        return false;
+
     std::set<uint32>& lootItems = AI_VALUE(std::set<uint32>&, "always loot list");
     if (lootItems.find(itemid) != lootItems.end())
         return true;

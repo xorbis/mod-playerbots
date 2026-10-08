@@ -40,6 +40,14 @@ bool LootRollAction::Execute(Event /*event*/)
         if (!proto)
             continue;
 
+        // XorWoW: before the armor token rule below, which TCG cards (epic class 15 junk) would match
+        if (IsXorWoWTcgCard(itemId))
+        {
+            group->CountRollVote(bot->GetGUID(), guid, PASS);
+            voted = true;
+            continue;
+        }
+
         std::string itemUsageParam;
         if (randomProperty != 0)
             itemUsageParam = std::to_string(itemId) + "," + std::to_string(randomProperty);
@@ -177,7 +185,7 @@ bool MasterLootRollAction::Execute(Event event)
     if (!group)
         return false;
 
-    group->CountRollVote(bot->GetGUID(), creatureGuid, CalculateRollVote(proto));
+    group->CountRollVote(bot->GetGUID(), creatureGuid, IsXorWoWTcgCard(itemId) ? PASS : CalculateRollVote(proto));
 
     return true;
 }
