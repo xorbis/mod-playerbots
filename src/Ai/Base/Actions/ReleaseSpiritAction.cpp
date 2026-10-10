@@ -40,6 +40,13 @@ bool ReleaseSpiritAction::Execute(Event event)
         return false;
     }
 
+    // XorWoW: no release while the fight is on, the bot stays a corpse until it is over
+    if (!bot->InBattleground() && botAI->IsGroupInCombat())
+    {
+        botAI->TellError("I will release once the fight is over");
+        return false;
+    }
+
     WorldPacket const& packet = event.getPacket();
     const std::string message = !packet.empty() && packet.GetOpcode() == CMSG_REPOP_REQUEST
         ? PlayerbotTextMgr::instance().GetBotTextOrDefault("release_spirit_releasing", "Releasing...", {})

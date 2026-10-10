@@ -291,12 +291,21 @@ GraveyardStruct const* SpiritHealerAction::GetGrave(bool startZone)
     return ClosestGrave;
 }
 
-bool SpiritHealerAction::Execute(Event /*event*/)
+bool SpiritHealerAction::Execute(Event event)
 {
     Corpse* corpse = bot->GetCorpse();
     if (!corpse)
     {
         botAI->TellError("I am not a spirit");
+        return false;
+    }
+
+    // XorWoW: no spirit healer revive while the fight is on (said only to the revive command,
+    // the corpse run calls this every tick)
+    if (!bot->InBattleground() && botAI->IsGroupInCombat())
+    {
+        if (!!event)
+            botAI->TellError("I will revive once the fight is over");
         return false;
     }
 

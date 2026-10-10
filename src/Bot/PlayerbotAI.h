@@ -553,6 +553,8 @@ public:
     bool IsAltBot();
     bool HasGameClientMaster();
     Player* GetGroupLeader();
+    // XorWoW: the bot, its master or a living group member on the bot's map is in combat
+    bool IsGroupInCombat();
     uint32 GetFixedBotNumber(uint32 maxNum = 100);
     GrouperType GetGrouperType();
     GuilderType GetGuilderType();

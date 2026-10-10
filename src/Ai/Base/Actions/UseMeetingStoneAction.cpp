@@ -63,6 +63,13 @@ bool SummonAction::Execute(Event /*event*/)
     if (!master)
         return false;
 
+    // XorWoW: no summon (and so no summon revive) while the fight is on
+    if (!bot->InBattleground() && botAI->IsGroupInCombat())
+    {
+        botAI->TellError("You cannot summon me during a fight");
+        return false;
+    }
+
     if (bot->GetPet())
         botAI->PetFollow();
 

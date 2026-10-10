@@ -4536,6 +4536,21 @@ Player* PlayerbotAI::GetGroupLeader()
     return master;
 }
 
+bool PlayerbotAI::IsGroupInCombat()
+{
+    if (bot->IsInCombat() || (master && master->IsInCombat()))
+        return true;
+
+    if (Group* group = bot->GetGroup())
+        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+            if (Player* member = ref->GetSource())
+                if (member->IsInWorld() && member->IsAlive() && member->GetMapId() == bot->GetMapId() &&
+                    member->IsInCombat())
+                    return true;
+
+    return false;
+}
+
 uint32 PlayerbotAI::GetFixedBotNumber(uint32 maxNum)
 {
     if (maxNum == 0)
