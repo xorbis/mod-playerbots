@@ -149,7 +149,7 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
         // MaxAddedBots can also bound the random bots a player collects by inviting them:
         // they follow the inviter like added bots, so they count the same way.
         if (!ignoreGroup && sPlayerbotAIConfig.maxAddedBotsIncludesInvited && sPlayerbotAIConfig.maxAddedBots > 0 &&
-            CountBotsOf(from) >= uint32(sPlayerbotAIConfig.maxAddedBots))
+            CountBotsOf(from) >= sPlayerbotAIConfig.GetMaxAddedBots(from))
         {
             if (reason)
                 *reason = PLAYERBOT_DENY_TOO_MANY_BOTS;
@@ -294,7 +294,7 @@ bool PlayerbotSecurity::CheckLevelFor(PlayerbotSecurityLevel level, bool silent,
                     out << "I am in a queue for dungeon. Will do it later";
                     break;
                 case PLAYERBOT_DENY_TOO_MANY_BOTS:
-                    out << "You already have " << sPlayerbotAIConfig.maxAddedBots << " bots with you. I would be one too many";
+                    out << "You already have " << sPlayerbotAIConfig.GetMaxAddedBots(from) << " bots with you. I would be one too many";
                     break;
                 default:
                     out << "I can't do that";

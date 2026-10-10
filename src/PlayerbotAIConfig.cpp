@@ -7,6 +7,7 @@
 #include "PlayerbotAIConfig.h"
 #include "BisListMgr.h"
 #include "Config.h"
+#include "Map.h"
 #include "NewRpgInfo.h"
 #include "PlayerbotDungeonRepository.h"
 #include "PlayerbotFactory.h"
@@ -948,6 +949,20 @@ void PlayerbotAIConfig::LoadRandomBotLevelConfig()
 
     ParseLevelMgrExcludeNames(sConfigMgr->GetOption<std::string>("AiPlayerbot.ResetBotLevel.ExcludeNames", ""),
         resetBotLevelExcludeNames);
+}
+
+// XorWoW: inside a raid instance a player may bring enough bots to fill the raid (its size minus
+// the player), e.g. 39 in Molten Core, 19 in Zul'Gurub; elsewhere MaxAddedBots applies.
+uint32 PlayerbotAIConfig::GetMaxAddedBots(Player* master) const
+{
+    uint32 limit = maxAddedBots > 0 ? uint32(maxAddedBots) : 0;
+    if (master)
+        if (Map* map = master->GetMap())
+            if (map->IsRaid())
+                if (InstanceMap* instance = map->ToInstanceMap())
+                    if (uint32 maxPlayers = instance->GetMaxPlayers(); maxPlayers > 1)
+                        limit = std::max(limit, maxPlayers - 1);
+    return limit;
 }
 
 bool PlayerbotAIConfig::IsInRandomAccountList(uint32 id)

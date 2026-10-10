@@ -130,10 +130,11 @@ void PlayerbotHolder::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId
                 ++loadingForMaster;
         }
         uint32 count = mgr->GetPlayerbotsCount() + loadingForMaster;
-        if (count >= uint32(PlayerbotAIConfig::instance().maxAddedBots))
+        uint32 maxBots = sPlayerbotAIConfig.GetMaxAddedBots(masterPlayer);
+        if (count >= maxBots)
         {
             allowed = false;
-            out << "Failure: You have added too many bots (more than " << sPlayerbotAIConfig.maxAddedBots << ")";
+            out << "Failure: You have added too many bots (more than " << maxBots << ")";
         }
         // MaxAddedAltBots bounds the player's own characters among those bots (same account or a
         // linked one); guild characters and addclass bots are not alts and only count for MaxAddedBots.

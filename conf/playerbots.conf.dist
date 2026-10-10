@@ -132,7 +132,8 @@ AiPlayerbot.DisabledWithoutRealPlayerLogoutDelay = 300
 # GENERAL
 #
 
-# The maximum number of bots that a player can control simultaneously
+# The maximum number of bots that a player can control simultaneously. Inside a raid instance
+# the limit is at least the raid's size minus one (the player), e.g. 39 in a 40-man raid.
 AiPlayerbot.MaxAddedBots = 40
 
 # Count the random bots a player invites to the group against MaxAddedBots. An invited random

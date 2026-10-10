@@ -17,6 +17,8 @@
 #include <unordered_map>
 #include <vector>
 
+class Player;
+
 enum class BotCheatMask : uint32
 {
     none = 0,
@@ -97,6 +99,7 @@ public:
     bool Initialize();
     void LoadRandomBotLevelConfig();
     bool IsInRandomAccountList(uint32 id);
+    uint32 GetMaxAddedBots(Player* master) const;
     bool IsInRandomQuestItemList(uint32 id);
     bool IsPvpProhibited(uint32 zoneId, uint32 areaId);
     bool IsInPvpProhibitedZone(uint32 id);
