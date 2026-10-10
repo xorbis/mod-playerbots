@@ -134,8 +134,10 @@ ItemUsage ItemUsageValue::Calculate()
     if (isLootFromItem && botNeedsItemForQuest)
         return ITEM_USAGE_QUEST;
 
-    // If this is not a selfbot acting alone and the master needs this quest item, defer to the master
-    if (!IsSelfBot(bot) && masterNeedsItemForQuest)
+    // If this is not a selfbot acting alone and the master needs this quest item, defer to the master.
+    // XorWoW: not for multi-drop items, where everyone loots their own copy - the quest sync no longer
+    // hands the bot its quest items, so it has to loot them like a player.
+    if (!IsSelfBot(bot) && masterNeedsItemForQuest && !proto->HasFlag(ITEM_FLAG_MULTI_DROP))
         return ITEM_USAGE_NONE;
 
     // If the bot itself needs the item for a quest, allow looting

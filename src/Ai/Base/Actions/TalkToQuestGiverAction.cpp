@@ -36,15 +36,9 @@ bool TalkToQuestGiverAction::ProcessQuest(Quest const* quest, Object* questGiver
         }
     }
 
-    if (sPlayerbotAIConfig.syncQuestWithPlayer)
-    {
-        if (master && master->GetQuestStatus(quest->GetQuestId()) == QUEST_STATUS_COMPLETE &&
-            (status == QUEST_STATUS_INCOMPLETE || status == QUEST_STATUS_FAILED))
-        {
-            isCompleted |= CompleteQuest(bot, quest->GetQuestId());
-            status = bot->GetQuestStatus(quest->GetQuestId());
-        }
-    }
+    // XorWoW: the quest sync no longer force-completes the bot's copy of a quest (it conjured the
+    // required items, kill credit and reputation, then the bot turned the quest in for the reward).
+    // A bot turns a quest in only once it has met the objectives itself.
 
     switch (status)
     {
@@ -279,14 +273,9 @@ bool TurnInQueryQuestAction::Execute(Event event)
         }
     }
 
-    if (sPlayerbotAIConfig.syncQuestWithPlayer)
-    {
-        if (status == QUEST_STATUS_INCOMPLETE || status == QUEST_STATUS_FAILED)
-        {
-            CompleteQuest(bot, quest->GetQuestId());
-            status = bot->GetQuestStatus(quest->GetQuestId());
-        }
-    }
+    // XorWoW: the quest sync no longer force-completes the bot's copy of a quest (it conjured the
+    // required items, kill credit and reputation, then the bot turned the quest in for the reward).
+    // A bot turns a quest in only once it has met the objectives itself.
     std::ostringstream out;
     out << "Quest ";
     switch (status)
