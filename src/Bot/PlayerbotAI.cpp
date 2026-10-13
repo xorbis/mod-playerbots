@@ -257,6 +257,10 @@ void PlayerbotAI::UpdateAI(uint32 elapsed, bool minimal)
         bot->GetSession()->IsLoggingOut() || bot->IsDuringRemoveFromWorld())
         return;
 
+    // XorWoW: a bot playing an XorWoW TCG game stays put at the table unless something attacks it
+    if (bot->GetSession()->IsInTcgGame() && !bot->IsInCombat())
+        return;
+
     // Bots send no movement opcodes, so m_lastFallZ stays frozen and Player::IsFalling() (a Z test
     // against it) blocks LFG teleports. Unit::IsFalling() is the flag test, so real falls keep theirs.
     if (!bot->Unit::IsFalling())

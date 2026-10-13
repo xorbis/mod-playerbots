@@ -1362,6 +1362,10 @@ bool RandomPlayerbotMgr::ProcessBot(uint32 bot)
     uint32 isValid = GetEventValue(bot, "add");
     if (!isValid)
     {
+        // XorWoW: not in the middle of an XorWoW TCG game; it logs out once the game is over
+        if (player && player->GetSession()->IsInTcgGame())
+            return false;
+
         if (!player || !player->GetGroup())
         {
             if (player)
@@ -1408,6 +1412,10 @@ bool RandomPlayerbotMgr::ProcessBot(uint32 bot)
     }
 
     if (!player->IsInWorld())
+        return false;
+
+    // XorWoW: no randomize, teleport or logout in the middle of an XorWoW TCG game
+    if (player->GetSession()->IsInTcgGame())
         return false;
 
     if (player->GetGroup() || player->HasUnitState(UNIT_STATE_IN_FLIGHT))
