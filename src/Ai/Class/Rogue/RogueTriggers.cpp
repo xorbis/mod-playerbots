@@ -20,10 +20,47 @@ constexpr uint32 SPELL_SPRINT_RANK_1 = 2983;
 //     return !botAI->HasAura("stealth", bot);
 // }
 
+// XorWoW: the bot's master when it is a player on the same map within 40 yards.
+static Player* GetNearbyMaster(PlayerbotAI* botAI, Player* bot)
+{
+    Player* master = botAI->GetMaster();
+    if (!master || master == bot || !master->IsInWorld() || !bot->IsWithinDistInMap(master, 40.0f))
+        return nullptr;
+
+    return master;
+}
+
+bool MasterStealthedTrigger::IsActive()
+{
+    if (bot->IsInCombat() || botAI->HasAura("stealth", bot) || !botAI->HasSpell("stealth"))
+        return false;
+
+    Player* master = GetNearbyMaster(botAI, bot);
+    return master && botAI->HasAura("stealth", master);
+}
+
+bool MasterUnstealthedTrigger::IsActive()
+{
+    if (bot->IsInCombat() || !botAI->HasAura("stealth", bot))
+        return false;
+
+    // Only a rogue master is mirrored; leave the bot's own stealthed approach alone.
+    Player* master = GetNearbyMaster(botAI, bot);
+    if (!master || master->getClass() != CLASS_ROGUE || master->IsInCombat() || botAI->HasAura("stealth", master))
+        return false;
+
+    return !AI_VALUE(Unit*, "current target") && !AI_VALUE(uint8, "attacker count");
+}
+
 bool UnstealthTrigger::IsActive()
 {
     if (!botAI->HasAura("stealth", bot))
         return false;
+
+    // XorWoW: stay stealthed while following a stealthed master.
+    if (Player* master = GetNearbyMaster(botAI, bot))
+        if (botAI->HasAura("stealth", master))
+            return false;
 
     if (!AI_VALUE2(bool, "moving", "self target"))
         return false;

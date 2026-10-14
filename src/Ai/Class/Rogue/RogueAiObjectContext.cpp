@@ -75,6 +75,8 @@ public:
         creators["in stealth"] = &RogueTriggerFactoryInternal::in_stealth;
         creators["no stealth"] = &RogueTriggerFactoryInternal::no_stealth;
         creators["stealth"] = &RogueTriggerFactoryInternal::stealth;
+        creators["master stealthed"] = &RogueTriggerFactoryInternal::master_stealthed;
+        creators["master unstealthed"] = &RogueTriggerFactoryInternal::master_unstealthed;
         creators["sprint"] = &RogueTriggerFactoryInternal::sprint;
         creators["main hand weapon no enchant"] =
             &RogueTriggerFactoryInternal::main_hand_weapon_no_enchant;
@@ -102,6 +104,8 @@ private:
     static Trigger* in_stealth(PlayerbotAI* botAI) { return new InStealthTrigger(botAI); }
     static Trigger* no_stealth(PlayerbotAI* botAI) { return new NoStealthTrigger(botAI); }
     static Trigger* stealth(PlayerbotAI* botAI) { return new StealthTrigger(botAI); }
+    static Trigger* master_stealthed(PlayerbotAI* botAI) { return new MasterStealthedTrigger(botAI); }
+    static Trigger* master_unstealthed(PlayerbotAI* botAI) { return new MasterUnstealthedTrigger(botAI); }
     static Trigger* sprint(PlayerbotAI* botAI) { return new SprintTrigger(botAI); }
     static Trigger* main_hand_weapon_no_enchant(PlayerbotAI* botAI)
     {

@@ -96,6 +96,23 @@ public:
     bool IsActive() override;
 };
 
+// XorWoW: a rogue bot mirrors its master's stealth out of combat.
+class MasterStealthedTrigger : public Trigger
+{
+public:
+    MasterStealthedTrigger(PlayerbotAI* botAI) : Trigger(botAI, "master stealthed") {}
+
+    bool IsActive() override;
+};
+
+class MasterUnstealthedTrigger : public Trigger
+{
+public:
+    MasterUnstealthedTrigger(PlayerbotAI* botAI) : Trigger(botAI, "master unstealthed") {}
+
+    bool IsActive() override;
+};
+
 class SapTrigger : public HasCcTargetTrigger
 {
 public:
