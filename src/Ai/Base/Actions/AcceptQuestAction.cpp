@@ -86,6 +86,12 @@ bool AcceptQuestAction::Execute(Event event)
     if (!qInfo)
         return false;
 
+    // XorWoW: an auto-accept quest is taken as soon as its details are opened, so the master's
+    // client never sends the accept packet - follow the details query once the master has the quest.
+    if (!event.getPacket().empty() && event.getPacket().GetOpcode() == CMSG_QUESTGIVER_QUERY_QUEST &&
+        (!qInfo->IsAutoAccept() || requester->GetQuestStatus(quest) == QUEST_STATUS_NONE))
+        return false;
+
     hasAccept |= AcceptQuest(qInfo, ObjectGuid(guid));
 
     if (hasAccept)
