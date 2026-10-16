@@ -20,7 +20,7 @@
  *   bags;<bot>                     BBS;<bot>;<money>;<conjured only>;<free slots>;<slots>, BB;<bag>;<slot>;<item string>;
  *                                  <count>;<flags> per item (1 tradable, 2 soulbound, 4 in the trade,
  *                                  8 quest item, 16 conjured, 32 the bot can wear it, 64 a vendor buys
- *                                  it), BE;<equipment slot>;<item string>;<flags> per worn item,
+ *                                  it, 128 locked by its owner - never tradable), BE;<equipment slot>;<item string>;<flags> per worn item,
  *                                  BBE;<bot>
  *   quests;<bot>                   BQS;<bot>, BQ;<id>;<level>;<0 incomplete|1 complete|2 failed>;
  *                                  <title>, BO;<id>;<have>;<need>;<text> per objective,
@@ -269,7 +269,8 @@ namespace
         ItemTemplate const* proto = item->GetTemplate();
         bool const conjured = proto->IsConjuredConsumable();
         uint32 flags = 0;
-        if (item->CanBeTraded(false, true) && (!conjuredOnly || conjured))
+        bool const locked = bot->IsXorWoWItemLocked(item, false);   // locked by its owner (xorwow_item_lock.cpp)
+        if (item->CanBeTraded(false, true) && !locked && (!conjuredOnly || conjured))
             flags |= 1;
         if (item->IsSoulBound())
             flags |= 2;
@@ -283,6 +284,8 @@ namespace
             flags |= 32;
         if (proto->SellPrice > 0)
             flags |= 64;
+        if (locked)
+            flags |= 128;
         return flags;
     }
 
@@ -451,7 +454,7 @@ namespace
             Error(player, bot->GetName() + " can only give you conjured items");
             return;
         }
-        if (!item->CanBeTraded(false, true))
+        if (!item->CanBeTraded(false, true) || bot->IsXorWoWItemLocked(item, false))
         {
             Error(player, "That item cannot be traded");
             return;
