@@ -7,7 +7,9 @@
 #include "PlayerbotAIConfig.h"
 #include "BisListMgr.h"
 #include "Config.h"
+#include "Group.h"
 #include "Map.h"
+#include "MapMgr.h"
 #include "NewRpgInfo.h"
 #include "PlayerbotDungeonRepository.h"
 #include "PlayerbotFactory.h"
@@ -952,16 +954,28 @@ void PlayerbotAIConfig::LoadRandomBotLevelConfig()
 }
 
 // XorWoW: inside a raid instance a player may bring enough bots to fill the raid (its size minus
-// the player), e.g. 39 in Molten Core, 19 in Zul'Gurub; elsewhere MaxAddedBots applies.
+// the player), e.g. 14 in Molten Core, 9 in Zul'Gurub. In a raid group out in the world (or in the
+// guild hall) it is a full 40-man raid, so the raid can be formed before the door - the core
+// refuses a raid larger than the instance's cap there. Elsewhere MaxAddedBots applies.
 uint32 PlayerbotAIConfig::GetMaxAddedBots(Player* master) const
 {
     uint32 limit = maxAddedBots > 0 ? uint32(maxAddedBots) : 0;
-    if (master)
-        if (Map* map = master->GetMap())
-            if (map->IsRaid())
-                if (InstanceMap* instance = map->ToInstanceMap())
-                    if (uint32 maxPlayers = instance->GetMaxPlayers(); maxPlayers > 1)
-                        limit = std::max(limit, maxPlayers - 1);
+    if (!master)
+        return limit;
+    Map* map = master->GetMap();
+    if (!map)
+        return limit;
+    if (map->IsRaid())
+    {
+        if (InstanceMap* instance = map->ToInstanceMap())
+            if (uint32 maxPlayers = instance->GetMaxPlayers(); maxPlayers > 1)
+                limit = std::max(limit, maxPlayers - 1);
+    }
+    else if (!map->Instanceable() || sMapMgr->GetScriptedInstanceMap(map->GetId()))
+    {
+        if (Group* group = master->GetGroup(); group && group->isRaidGroup())
+            limit = std::max(limit, uint32(MAXRAIDSIZE - 1));
+    }
     return limit;
 }
 
