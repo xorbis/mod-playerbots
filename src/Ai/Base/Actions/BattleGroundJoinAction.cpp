@@ -158,7 +158,7 @@ bool BGJoinAction::gatherArenaTeam(ArenaType type)
         if (!member)
             continue;
 
-        if (member->GetLevel() < 70)
+        if (member->GetLevel() < sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
             continue;
 
         if (!group->AddMember(member))
