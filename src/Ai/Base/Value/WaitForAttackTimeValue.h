@@ -21,7 +21,7 @@ class PlayerbotAI;
 class WaitForAttackTimeValue : public ManualSetValue<uint8>
 {
 public:
-    WaitForAttackTimeValue(PlayerbotAI* botAI) : ManualSetValue<uint8>(botAI, 10, "wait for attack time") {}
+    WaitForAttackTimeValue(PlayerbotAI* botAI) : ManualSetValue<uint8>(botAI, 3, "wait for attack time") {}
 };
 
 class CombatStartTimeValue : public ManualSetValue<time_t>

@@ -31,6 +31,10 @@ bool WaitForAttackStrategy::ShouldWait(PlayerbotAI* botAI)
     if (botAI->HasStrategy("wait for attack", BOT_STATE_COMBAT))
     {
         Player* bot = botAI->GetBot();
+        // XorWoW: a bot tank goes in first so the others have something to wait for
+        if (PlayerbotAI::IsTank(bot))
+            return false;
+
         if (bot->GetGroup() && botAI->HasGameClientMaster())
         {
             // Don't wait if the current target is an enemy player
