@@ -29,6 +29,7 @@
 #include "Playerbots.h"
 #include "RandomPlayerbotMgr.h"
 #include "SharedDefines.h"
+#include "Util.h"
 #include "WorldSession.h"
 #include "WorldSessionMgr.h"
 #include <algorithm>
@@ -1285,7 +1286,26 @@ std::vector<std::string> PlayerbotHolder::HandlePlayerbotCommand(char const* arg
         }
     }
 
-    std::vector<std::string> chars = split(charnameStr, ',');
+    // XorWoW: "bot remove all" logs out every bot attached to the player, like "!" but for anyone,
+    // since it only touches the player's own bots.
+    bool removeAll = (cmdStr == "remove" || cmdStr == "logout" || cmdStr == "rm") && StringEqualI(charnameStr, "all");
+    if (removeAll)
+    {
+        for (PlayerBotMap::const_iterator i = GetPlayerBotsBegin(); i != GetPlayerBotsEnd(); ++i)
+        {
+            if (Player* bot = i->second)
+                if (bot->IsInWorld())
+                    bots.insert(bot->GetName());
+        }
+
+        if (bots.empty())
+        {
+            messages.push_back("you have no bots");
+            return messages;
+        }
+    }
+
+    std::vector<std::string> chars = removeAll ? std::vector<std::string>() : split(charnameStr, ',');
     for (std::vector<std::string>::iterator i = chars.begin(); i != chars.end(); i++)
     {
         std::string s = *i;
