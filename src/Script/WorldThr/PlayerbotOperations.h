@@ -17,6 +17,7 @@
 #include "PlayerbotMgr.h"
 #include "PlayerbotOperation.h"
 #include "PlayerbotRepository.h"
+#include "PlayerbotTextMgr.h"
 #include "Playerbots.h"
 #include "RandomPlayerbotFactory.h"
 #include "RandomPlayerbotMgr.h"
@@ -113,6 +114,70 @@ public:
 private:
     ObjectGuid m_botGuid;
     ObjectGuid m_targetGuid;
+};
+
+// XorWoW: a bot accepting a group invite. The accept builds the group and changes the leader's
+// group pointer, and the bot's AI runs on its own map's thread - a leader in another map (a guild
+// hall, bots out on the continents) had their group changed under them by several threads at
+// once, which lost them their raid. Group opcodes are world thread work, as for a real client.
+class GroupAcceptOperation : public PlayerbotOperation
+{
+public:
+    GroupAcceptOperation(ObjectGuid botGuid) : m_botGuid(botGuid) {}
+
+    bool Execute() override
+    {
+        Player* bot = ObjectAccessor::FindPlayer(m_botGuid);
+        if (!bot)
+            return false;
+
+        Group* grp = bot->GetGroupInvite();
+        if (!grp)
+            return false;
+
+        Player* inviter = ObjectAccessor::FindPlayer(grp->GetLeaderGUID());
+        if (!inviter)
+            return false;
+
+        WorldPacket p;
+        uint32 roles_mask = 0;
+        p << roles_mask;
+        bot->GetSession()->HandleGroupAcceptOpcode(p);
+
+        if (!bot->GetGroup() || !bot->GetGroup()->IsMember(inviter->GetGUID()))
+            return false;
+
+        PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
+        if (!botAI)
+            return true;
+
+        if (sRandomPlayerbotMgr.IsRandomBot(bot))
+            botAI->SetMaster(inviter);
+
+        botAI->ResetStrategies();
+        botAI->ChangeStrategy("+follow,-lfg,-bg", BOT_STATE_NON_COMBAT);
+        botAI->Reset();
+
+        botAI->TellMaster(PlayerbotTextMgr::instance().GetBotTextOrDefault("hello", "Hello", {}));
+
+        if (sPlayerbotAIConfig.summonWhenGroup && bot->GetDistance(inviter) > sPlayerbotAIConfig.sightDistance)
+        {
+            SummonAction summonAction(botAI, "accept invitation");
+            summonAction.Teleport(inviter, bot, true);
+        }
+        return true;
+    }
+
+    ObjectGuid GetBotGuid() const override { return m_botGuid; }
+
+    uint32 GetPriority() const override { return 50; }  // High priority (player-facing)
+
+    std::string GetName() const override { return "GroupAccept"; }
+
+    bool IsValid() const override { return ObjectAccessor::FindPlayer(m_botGuid) != nullptr; }
+
+private:
+    ObjectGuid m_botGuid;
 };
 
 // Remove member from group

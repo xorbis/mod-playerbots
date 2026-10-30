@@ -8,8 +8,10 @@
 #include "Event.h"
 #include "ObjectAccessor.h"
 #include "PlayerbotAIConfig.h"
+#include "PlayerbotOperations.h"
 #include "PlayerbotSecurity.h"
 #include "PlayerbotTextMgr.h"
+#include "PlayerbotWorldThreadProcessor.h"
 #include "Playerbots.h"
 #include "WorldPacket.h"
 
@@ -39,28 +41,7 @@ bool AcceptInvitationAction::Execute(Event event)
     if (bot->isAFK() && !IsSelfBot(bot))
         bot->ToggleAFK();
 
-    WorldPacket p;
-    uint32 roles_mask = 0;
-    p << roles_mask;
-    bot->GetSession()->HandleGroupAcceptOpcode(p);
-
-    if (!bot->GetGroup() || !bot->GetGroup()->IsMember(inviter->GetGUID()))
-        return false;
-
-    if (sRandomPlayerbotMgr.IsRandomBot(bot))
-        botAI->SetMaster(inviter);
-    // else
-    // PlayerbotRepository::instance().Save(botAI);
-
-    botAI->ResetStrategies();
-    botAI->ChangeStrategy("+follow,-lfg,-bg", BOT_STATE_NON_COMBAT);
-    botAI->Reset();
-
-    botAI->TellMaster(PlayerbotTextMgr::instance().GetBotTextOrDefault("hello", "Hello", {}));
-
-    if (sPlayerbotAIConfig.summonWhenGroup && bot->GetDistance(inviter) > sPlayerbotAIConfig.sightDistance)
-    {
-        Teleport(inviter, bot, true);
-    }
+    // XorWoW: the accept itself runs on the world thread (GroupAcceptOperation)
+    PlayerbotWorldThreadProcessor::instance().QueueOperation(std::make_unique<GroupAcceptOperation>(bot->GetGUID()));
     return true;
 }
