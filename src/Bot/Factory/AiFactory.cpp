@@ -290,6 +290,9 @@ void AiFactory::AddDefaultCombatStrategies(Player* player, PlayerbotAI* const fa
     if (sPlayerbotAIConfig.autoAvoidAoe && facade->HasGameClientMaster())
         engine->addStrategy("avoid aoe", false);
 
+    if (sPlayerbotAIConfig.autoAvoidWater)
+        engine->addStrategy("avoid water", false);
+
     engine->addStrategy("formation", false);
 
     switch (player->getClass())
@@ -589,6 +592,9 @@ void AiFactory::AddDefaultNonCombatStrategies(Player* player, PlayerbotAI* const
 
     if (sPlayerbotAIConfig.autoSaveMana && PlayerbotAI::IsHeal(player, true))
         nonCombatEngine->addStrategy("save mana", false);
+
+    if (sPlayerbotAIConfig.autoAvoidWater)
+        nonCombatEngine->addStrategy("avoid water", false);
 
     if ((sRandomPlayerbotMgr.IsRandomBot(player)) && !player->InBattleground())
     {

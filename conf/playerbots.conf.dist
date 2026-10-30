@@ -503,6 +503,12 @@ AiPlayerbot.MaxAoeAvoidRadius = 15.0
 # A whitelist of aoe spell IDs that should not be avoided
 AiPlayerbot.AoeAvoidSpellWhitelist = 50759,57491,13810,29946
 
+# Give bots the "avoid water" strategy (combat and non-combat): their paths go around water unless
+# their master is in water (or was in the last 5 seconds). Without it bots wade in wherever the
+# shortest path goes. Toggle per bot with "co -avoid water" / "nc -avoid water" (+ to turn it back on).
+# Default: 1 (enabled)
+AiPlayerbot.AutoAvoidWater = 1
+
 # Enable healer bot save mana strategy
 # Default: 1 (enabled)
 AiPlayerbot.AutoSaveMana = 1

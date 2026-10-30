@@ -124,6 +124,7 @@ public:
         creators["guild"] = &StrategyContext::guild;
         creators["grind"] = &StrategyContext::grind;
         creators["avoid aoe"] = &StrategyContext::avoid_aoe;
+        creators["avoid water"] = &StrategyContext::avoid_water;
         creators["tank face"] = &StrategyContext::tank_face;
         creators["move random"] = &StrategyContext::move_random;
         creators["formation"] = &StrategyContext::combat_formation;
@@ -199,6 +200,7 @@ private:
     static Strategy* guild (PlayerbotAI* botAI) { return new GuildStrategy(botAI); }
     static Strategy* grind(PlayerbotAI* botAI) { return new GrindingStrategy(botAI); }
     static Strategy* avoid_aoe(PlayerbotAI* botAI) { return new AvoidAoeStrategy(botAI); }
+    static Strategy* avoid_water(PlayerbotAI* botAI) { return new AvoidWaterStrategy(botAI); }
     static Strategy* tank_face(PlayerbotAI* botAI) { return new TankFaceStrategy(botAI); }
     static Strategy* move_random(PlayerbotAI* botAI) { return new MoveRandomStrategy(botAI); }
     static Strategy* combat_formation(PlayerbotAI* botAI) { return new CombatFormationStrategy(botAI); }

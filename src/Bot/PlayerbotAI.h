@@ -626,6 +626,7 @@ private:
                                    bool mixed = false);
     bool IsTellAllowed(PlayerbotSecurityLevel securityLevel = PLAYERBOT_SECURITY_ALLOW_ALL);
     void UpdateAIGroupMaster();
+    void UpdateBotNavWaterCost();
     Item* FindItemInInventory(std::function<bool(ItemTemplate const*)> checkItem) const;
     void HandleCommands();
     void HandleCommand(uint32 type, std::string const& text, Player& fromPlayer, const uint32 lang = LANG_UNIVERSAL);
@@ -646,6 +647,7 @@ protected:
     Engine* currentEngine;
     Engine* engines[BOT_STATE_MAX];
     BotState currentState;
+    uint32 masterInWaterTime = 0;  // getMSTime() the master was last seen in water, for "avoid water"
     ChatHelper chatHelper;
     std::list<ChatCommandHolder> chatCommands;
     std::list<ChatQueuedReply> chatReplies;

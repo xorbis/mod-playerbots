@@ -30,6 +30,15 @@ public:
     void InitTriggers(std::vector<TriggerNode*>& triggers) override;
 };
 
+// No actions: while it is on, PlayerbotAI::UpdateBotNavWaterCost makes the bot's paths go around water
+// unless its master is in water. Added to both engines, the engine of the current state decides.
+class AvoidWaterStrategy : public Strategy
+{
+public:
+    explicit AvoidWaterStrategy(PlayerbotAI* ai) : Strategy(ai) {}
+    const std::string getName() override { return "avoid water"; }
+};
+
 class TankFaceStrategy : public Strategy
 {
 public:

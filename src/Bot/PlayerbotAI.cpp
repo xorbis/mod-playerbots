@@ -268,6 +268,8 @@ void PlayerbotAI::UpdateAI(uint32 elapsed, bool minimal)
     if (!bot->Unit::IsFalling())
         bot->SetFallInformation(0, bot->GetPositionZ());
 
+    UpdateBotNavWaterCost();
+
     // Handle cheat options (set bot health and power if cheats are enabled)
     if (bot->IsAlive() &&
         (static_cast<uint32>(GetCheat()) > 0 || static_cast<uint32>(sPlayerbotAIConfig.botCheatMask) > 0))
@@ -422,6 +424,26 @@ void PlayerbotAI::UpdateAI(uint32 elapsed, bool minimal)
 }
 
 // Helper function for UpdateAI to check group membership and handle removal if necessary
+// "avoid water": the bot's paths go around water (the core's water cost 20) unless its master is
+// wading or swimming, or was in the last 5 seconds so a bot behind them doesn't veer off once they
+// step out. Without the strategy the cost is 1 and the bot takes the shortest path like a player.
+void PlayerbotAI::UpdateBotNavWaterCost()
+{
+    BotState state = currentState == BOT_STATE_COMBAT ? BOT_STATE_COMBAT : BOT_STATE_NON_COMBAT;
+    if (!engines[state] || !engines[state]->HasStrategy("avoid water"))
+    {
+        bot->SetBotNavWaterCost(1.0f);
+        return;
+    }
+
+    if (master && master != bot && master->IsInWorld() && master->GetMap() == bot->GetMap() &&
+        (master->GetLiquidData().Status & MAP_LIQUID_STATUS_IN_CONTACT))
+        masterInWaterTime = getMSTime();
+
+    bool followIntoWater = masterInWaterTime && getMSTimeDiff(masterInWaterTime, getMSTime()) < 5000;
+    bot->SetBotNavWaterCost(followIntoWater ? 1.0f : 20.0f);
+}
+
 void PlayerbotAI::UpdateAIGroupMaster()
 {
     if (!bot)
