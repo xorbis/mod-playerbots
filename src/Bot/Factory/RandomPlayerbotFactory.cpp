@@ -988,6 +988,29 @@ uint32 RandomPlayerbotFactory::GetBotArenaTeamCount(ArenaType type)
     return it != _botArenaTeamRegistry.end() ? static_cast<uint32>(it->second.size()) : 0;
 }
 
+// Seats bots can still fill: every missing team at full size plus the free slots of the existing ones
+uint32 RandomPlayerbotFactory::GetOpenBotArenaSeats()
+{
+    uint32 seats = 0;
+    for (auto const& [type, target] : _configTargets)
+    {
+        uint32 const capacity = static_cast<uint32>(type);
+        uint32 const count = GetBotArenaTeamCount(type);
+        if (count < target)
+            seats += (target - count) * capacity;
+
+        auto it = _botArenaTeamRegistry.find(type);
+        if (it == _botArenaTeamRegistry.end())
+            continue;
+
+        for (uint32 teamId : it->second)
+            if (ArenaTeam* team = sArenaTeamMgr->GetArenaTeamById(teamId))
+                if (team->GetMembersSize() < capacity)
+                    seats += capacity - team->GetMembersSize();
+    }
+    return seats;
+}
+
 void RandomPlayerbotFactory::CollectJoinableBotArenaTeams(ArenaType type, TeamId faction, std::vector<ArenaTeam*>& out)
 {
     auto it = _botArenaTeamRegistry.find(type);

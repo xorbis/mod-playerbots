@@ -391,6 +391,10 @@ void RandomPlayerbotMgr::UpdateAIInternal(uint32 /*elapsed*/, bool /*minimal*/)
             sRandomPlayerbotMgr.CheckLfgQueue();
     }
 
+    // XorWoW: login-time assignment misses most bots, so keep filling the arena teams from bots in the world
+    if (sPlayerbotAIConfig.randomBotJoinBG && time(nullptr) > (ArenaTeamCheckTimer + 300))
+        TopUpArenaTeams();
+
     if (sPlayerbotAIConfig.randomBotAutologin && sPlayerbotAIConfig.randomBotPrintStatsInterval &&
         time(nullptr) > (printStatsTimer + sPlayerbotAIConfig.randomBotPrintStatsInterval))
     {
@@ -1791,6 +1795,44 @@ void RandomPlayerbotMgr::Init()
     PlayerbotsDatabasePreparedStatement* stmt = PlayerbotsDatabase.GetPreparedStatement(PLAYERBOTS_DEL_RANDOM_BOTS_BY_EVENT);
     stmt->SetData(0, std::string("add"));
     PlayerbotsDatabase.Execute(stmt);
+}
+
+void RandomPlayerbotMgr::TopUpArenaTeams()
+{
+    ArenaTeamCheckTimer = time(nullptr);
+
+    if (sPlayerbotAIConfig.deleteRandomBotArenaTeams)
+        return;
+
+    uint32 const openSeats = RandomPlayerbotFactory::GetOpenBotArenaSeats();
+    if (!openSeats)
+        return;
+
+    uint32 const maxLevel = sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL);
+    uint32 queued = 0;
+    for (auto const& [guid, bot] : playerBots)
+    {
+        if (queued >= openSeats)
+            break;
+
+        if (!bot || !bot->IsInWorld() || bot->GetLevel() < maxLevel)
+            continue;
+
+        bool inTeam = false;
+        for (uint32 slot = 0; slot < MAX_ARENA_SLOT && !inTeam; ++slot)
+            inTeam = bot->GetArenaTeamId(slot) != 0;
+        if (inTeam)
+            continue;
+
+        RandomPlayerbotFactory::AssignBotToArenaTeam(bot);
+        ++queued;
+    }
+
+    LOG_INFO("playerbots", "Arena team top-up: {} open seats, {} bots queued (2v2={}/{}, 3v3={}/{}, 5v5={}/{})",
+             openSeats, queued,
+             RandomPlayerbotFactory::GetBotArenaTeamCount(ARENA_TYPE_2v2), sPlayerbotAIConfig.randomBotArenaTeam2v2Count,
+             RandomPlayerbotFactory::GetBotArenaTeamCount(ARENA_TYPE_3v3), sPlayerbotAIConfig.randomBotArenaTeam3v3Count,
+             RandomPlayerbotFactory::GetBotArenaTeamCount(ARENA_TYPE_5v5), sPlayerbotAIConfig.randomBotArenaTeam5v5Count);
 }
 
 void RandomPlayerbotMgr::InitArenaTeams()

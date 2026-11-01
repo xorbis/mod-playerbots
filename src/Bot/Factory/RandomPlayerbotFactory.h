@@ -61,6 +61,7 @@ public:
     static void AssignBotToArenaTeam(Player* bot);
     static void DeleteBotArenaTeams();
     static uint32 GetBotArenaTeamCount(ArenaType type);
+    static uint32 GetOpenBotArenaSeats();
     static void LoadArenaTeamData();
 
 private:

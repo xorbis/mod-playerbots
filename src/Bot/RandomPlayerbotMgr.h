@@ -154,6 +154,7 @@ public:
     std::map<TeamId, std::vector<uint32>> LfgDungeons;
     void CheckBgQueue();
     void CheckLfgQueue();
+    void TopUpArenaTeams();
     void CheckPlayers();
     void LogBattlegroundInfo();
 
@@ -232,6 +233,7 @@ private:
     time_t BgCheckTimer;
     time_t LfgCheckTimer;
     time_t PlayersCheckTimer;
+    time_t ArenaTeamCheckTimer = 0;
     time_t RealPlayerLastTimeSeen = 0;
     time_t DelayLoginBotsTimer;
     time_t printStatsTimer;
