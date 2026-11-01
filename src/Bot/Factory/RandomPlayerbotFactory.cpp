@@ -877,7 +877,7 @@ void RandomPlayerbotFactory::AssignBotToArenaTeam(Player* bot)
     if (bot->GetLevel() < sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
         return;
 
-    for (uint32 arena_slot = 0; arena_slot < MAX_ARENA_SLOT; ++arena_slot)
+    for (uint32 arena_slot = 0; arena_slot < BOT_ARENA_SLOTS; ++arena_slot)
     {
         if (bot->GetArenaTeamId(arena_slot))
             return;
@@ -890,7 +890,7 @@ void RandomPlayerbotFactory::AssignBotToArenaTeam(Player* bot)
 void RandomPlayerbotFactory::AssignBotToArenaTeamInternal(Player* bot)
 {
     // Check if bot has team, only one per bot to avoid queue conflicts
-    for (uint32 arena_slot = 0; arena_slot < MAX_ARENA_SLOT; ++arena_slot)
+    for (uint32 arena_slot = 0; arena_slot < BOT_ARENA_SLOTS; ++arena_slot)
     {
         if (bot->GetArenaTeamId(arena_slot) ||
             sCharacterCache->GetCharacterArenaTeamIdByGuid(bot->GetGUID(), arena_slot))

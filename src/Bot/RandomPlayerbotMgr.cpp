@@ -1819,7 +1819,7 @@ void RandomPlayerbotMgr::TopUpArenaTeams()
             continue;
 
         bool inTeam = false;
-        for (uint32 slot = 0; slot < MAX_ARENA_SLOT && !inTeam; ++slot)
+        for (uint32 slot = 0; slot < RandomPlayerbotFactory::BOT_ARENA_SLOTS && !inTeam; ++slot)
             inTeam = bot->GetArenaTeamId(slot) != 0;
         if (inTeam)
             continue;

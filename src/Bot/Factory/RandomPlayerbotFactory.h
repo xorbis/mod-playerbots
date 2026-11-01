@@ -62,6 +62,10 @@ public:
     static void DeleteBotArenaTeams();
     static uint32 GetBotArenaTeamCount(ArenaType type);
     static uint32 GetOpenBotArenaSeats();
+
+    // A player has 3 arena team slots (2v2, 3v3, 5v5). The core's MAX_ARENA_SLOT is 4, and slot 3 reads
+    // the next update field (honor currency), so any bot with honor looked like it was already in a team.
+    static constexpr uint32 BOT_ARENA_SLOTS = 3;
     static void LoadArenaTeamData();
 
 private:
