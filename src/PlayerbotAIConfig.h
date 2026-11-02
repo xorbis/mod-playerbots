@@ -131,6 +131,7 @@ public:
     std::set<uint32> aoeAvoidSpellWhitelist;
     bool tellWhenAvoidAoe;
     bool autoAvoidWater;
+    bool autoCcMindControl;
     std::set<uint32> disallowedGameObjects;
     std::set<uint32> attunementQuests;
     std::set<uint32> unobtainableItems;

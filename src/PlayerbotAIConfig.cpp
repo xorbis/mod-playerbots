@@ -172,6 +172,7 @@ bool PlayerbotAIConfig::Initialize()
                               aoeAvoidSpellWhitelist);
     tellWhenAvoidAoe = sConfigMgr->GetOption<bool>("AiPlayerbot.TellWhenAvoidAoe", false);
     autoAvoidWater = sConfigMgr->GetOption<bool>("AiPlayerbot.AutoAvoidWater", true);
+    autoCcMindControl = sConfigMgr->GetOption<bool>("AiPlayerbot.AutoCcMindControl", true);
 
     randomGearLoweringChance = sConfigMgr->GetOption<float>("AiPlayerbot.RandomGearLoweringChance", 0.0f);
     randomGearQualityLimit = sConfigMgr->GetOption<int32>("AiPlayerbot.RandomGearQualityLimit", 3);

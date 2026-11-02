@@ -758,6 +758,15 @@ public:
     bool IsActive() override;
 };
 
+// XorWoW: a group member is mind controlled and this bot has a crowd control spell that can land on them
+class PartyMemberMindControlledTrigger : public Trigger
+{
+public:
+    PartyMemberMindControlledTrigger(PlayerbotAI* botAI) : Trigger(botAI, "party member mind controlled", 1) {}
+
+    bool IsActive() override;
+};
+
 class FearSleepSapTrigger : public Trigger
 {
 public:

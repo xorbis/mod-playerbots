@@ -56,6 +56,7 @@
 #include "LootValues.h"
 #include "MaintenanceValues.h"
 #include "ManaSaveLevelValue.h"
+#include "MindControlledMemberValue.h"
 #include "NearestAdsValue.h"
 #include "NearestCorpsesValue.h"
 #include "NearestFriendlyPlayersValue.h"
@@ -148,6 +149,7 @@ public:
         creators["enemy player target"] = &ValueContext::enemy_player_target;
         creators["cc target"] = &ValueContext::cc_target;
         creators["current cc target"] = &ValueContext::current_cc_target;
+        creators["mind controlled member"] = &ValueContext::mind_controlled_member;
         creators["pet target"] = &ValueContext::pet_target;
         creators["old target"] = &ValueContext::old_target;
         creators["grind target"] = &ValueContext::grind_target;
@@ -474,6 +476,7 @@ private:
     static UntypedValue* enemy_player_target(PlayerbotAI* botAI) { return new EnemyPlayerValue(botAI); }
     static UntypedValue* cc_target(PlayerbotAI* botAI) { return new CcTargetValue(botAI); }
     static UntypedValue* current_cc_target(PlayerbotAI* botAI) { return new CurrentCcTargetValue(botAI); }
+    static UntypedValue* mind_controlled_member(PlayerbotAI* botAI) { return new MindControlledMemberValue(botAI); }
     static UntypedValue* pet_target(PlayerbotAI* botAI) { return new PetTargetValue(botAI); }
     static UntypedValue* grind_target(PlayerbotAI* botAI) { return new GrindTargetValue(botAI); }
     static UntypedValue* aggressive_target(PlayerbotAI* botAI) { return new AggressiveTargetValue(botAI); }

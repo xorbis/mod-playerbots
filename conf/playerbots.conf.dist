@@ -509,6 +509,13 @@ AiPlayerbot.AoeAvoidSpellWhitelist = 50759,57491,13810,29946
 # Default: 1 (enabled)
 AiPlayerbot.AutoAvoidWater = 1
 
+# Give bots the "cc mind control" combat strategy: when a group member is mind controlled by an enemy,
+# bots polymorph / fear / stun them with their class crowd control (polymorph, fear, repentance,
+# hammer of justice, blind, gouge, wyvern sting, scatter shot, intimidating shout, concussion blow,
+# cyclone, hex) when in range. Toggle per bot with "co -cc mind control" / "co +cc mind control".
+# Default: 1 (enabled)
+AiPlayerbot.AutoCcMindControl = 1
+
 # Enable healer bot save mana strategy
 # Default: 1 (enabled)
 AiPlayerbot.AutoSaveMana = 1

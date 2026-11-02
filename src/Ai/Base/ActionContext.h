@@ -176,6 +176,7 @@ public:
         creators["blood fury"] = &ActionContext::blood_fury;
         creators["berserking"] = &ActionContext::berserking;
         creators["every man for himself"] = &ActionContext::every_man_for_himself;
+        creators["cc mind controlled member"] = &ActionContext::cc_mind_controlled_member;
         creators["will of the forsaken"] = &ActionContext::will_of_the_forsaken;
         creators["stoneform"] = &ActionContext::stoneform;
         creators["escape artist"] = &ActionContext::escape_artist;
@@ -383,6 +384,7 @@ private:
     static Action* blood_fury(PlayerbotAI* botAI) { return new CastBloodFuryAction(botAI); }
     static Action* berserking(PlayerbotAI* botAI) { return new CastBerserkingAction(botAI); }
     static Action* every_man_for_himself(PlayerbotAI* botAI) { return new CastEveryManForHimselfAction(botAI); }
+    static Action* cc_mind_controlled_member(PlayerbotAI* botAI) { return new CastCcOnMindControlledAction(botAI); }
     static Action* will_of_the_forsaken(PlayerbotAI* botAI) { return new CastWillOfTheForsakenAction(botAI); }
     static Action* stoneform(PlayerbotAI* botAI) { return new CastStoneformAction(botAI); }
     static Action* escape_artist(PlayerbotAI* botAI) { return new CastEscapeArtistAction(botAI); }

@@ -39,6 +39,15 @@ public:
     const std::string getName() override { return "avoid water"; }
 };
 
+// XorWoW: polymorph, fear, stun... a group member who is mind controlled by an enemy
+class CcMindControlStrategy : public Strategy
+{
+public:
+    explicit CcMindControlStrategy(PlayerbotAI* ai) : Strategy(ai) {}
+    const std::string getName() override { return "cc mind control"; }
+    void InitTriggers(std::vector<TriggerNode*>& triggers) override;
+};
+
 class TankFaceStrategy : public Strategy
 {
 public:

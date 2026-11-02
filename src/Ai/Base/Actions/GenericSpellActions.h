@@ -310,6 +310,19 @@ public:
     bool isPossible() override;
 };
 
+// XorWoW: the bot's class crowd control on a mind controlled group member, the spell is chosen at cast time
+class CastCcOnMindControlledAction : public Action
+{
+public:
+    CastCcOnMindControlledAction(PlayerbotAI* botAI) : Action(botAI, "cc mind controlled member") {}
+
+    std::string const GetTargetName() override { return "mind controlled member"; }
+    bool Execute(Event event) override;
+    bool isPossible() override;
+    bool isUseful() override;
+    ActionThreatType getThreatType() override { return ActionThreatType::None; }
+};
+
 class CastWillOfTheForsakenAction : public CastSpellAction
 {
 public:

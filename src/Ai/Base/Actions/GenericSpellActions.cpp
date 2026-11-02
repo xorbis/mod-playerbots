@@ -10,6 +10,7 @@
 #include "GenericBuffUtils.h"
 #include "Group.h"
 #include "ItemTemplate.h"
+#include "MindControlledMemberValue.h"
 #include "ObjectDefines.h"
 #include "Opcodes.h"
 #include "Player.h"
@@ -492,6 +493,25 @@ bool CastVehicleSpellAction::Execute(Event /*event*/)
 {
     uint32 spellId = AI_VALUE2(uint32, "vehicle spell id", spell);
     return botAI->CastVehicleSpell(spellId, GetTarget());
+}
+
+bool CastCcOnMindControlledAction::Execute(Event /*event*/)
+{
+    Unit* target = GetTarget();
+    if (!target)
+        return false;
+
+    std::string const spell = MindControlledMemberValue::SelectCcSpell(botAI, target);
+    return !spell.empty() && botAI->CastSpell(spell, target);
+}
+
+bool CastCcOnMindControlledAction::isPossible() { return GetTarget() != nullptr; }
+
+// The value is cached for a second, the charm may be gone or another crowd control may have landed since
+bool CastCcOnMindControlledAction::isUseful()
+{
+    Unit* target = GetTarget();
+    return target && target->IsCharmed() && !MindControlledMemberValue::IsCrowdControlled(target);
 }
 
 bool CastEveryManForHimselfAction::isPossible()

@@ -72,6 +72,12 @@ void AvoidAoeStrategy::InitMultipliers(std::vector<Multiplier*>& /*multipliers*/
 {
 }
 
+void CcMindControlStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "party member mind controlled", { NextAction("cc mind controlled member", ACTION_INTERRUPT + 1) }));
+}
+
 TankFaceStrategy::TankFaceStrategy(PlayerbotAI* botAI) : Strategy(botAI) {}
 
 std::vector<NextAction> TankFaceStrategy::getDefaultActions()

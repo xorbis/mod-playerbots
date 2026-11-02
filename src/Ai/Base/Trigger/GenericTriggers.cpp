@@ -10,6 +10,7 @@
 #include "GenericBuffUtils.h"
 #include "ItemVisitors.h"
 #include "LastSpellCastValue.h"
+#include "MindControlledMemberValue.h"
 #include "ObjectGuid.h"
 #include "Player.h"
 #include "PlayerbotAI.h"
@@ -488,6 +489,12 @@ bool FearCharmSleepTrigger::IsActive()
            bot->HasAuraType(SPELL_AURA_MOD_CHARM) ||
            bot->HasAuraType(SPELL_AURA_AOE_CHARM) ||
            bot->HasAuraWithMechanic(1 << MECHANIC_SLEEP);
+}
+
+bool PartyMemberMindControlledTrigger::IsActive()
+{
+    Unit* target = AI_VALUE(Unit*, "mind controlled member");
+    return target && !MindControlledMemberValue::SelectCcSpell(botAI, target).empty();
 }
 
 bool FearSleepSapTrigger::IsActive()

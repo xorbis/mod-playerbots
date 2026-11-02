@@ -293,6 +293,9 @@ void AiFactory::AddDefaultCombatStrategies(Player* player, PlayerbotAI* const fa
     if (sPlayerbotAIConfig.autoAvoidWater)
         engine->addStrategy("avoid water", false);
 
+    if (sPlayerbotAIConfig.autoCcMindControl)
+        engine->addStrategy("cc mind control", false);
+
     engine->addStrategy("formation", false);
 
     switch (player->getClass())
