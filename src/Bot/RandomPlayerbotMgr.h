@@ -155,6 +155,8 @@ public:
     void CheckBgQueue();
     void CheckLfgQueue();
     void TopUpArenaTeams();
+    void MatchRatedArenaQueues();
+    bool QueueBotArenaOpponent(uint8 arenaType, uint8 bracketId, uint32 matchmakerRating, uint32 playerTeamId);
     void CheckPlayers();
     void LogBattlegroundInfo();
 
@@ -234,6 +236,8 @@ private:
     time_t LfgCheckTimer;
     time_t PlayersCheckTimer;
     time_t ArenaTeamCheckTimer = 0;
+    time_t ArenaMatchCheckTimer = 0;
+    std::map<uint32, time_t> ArenaOpponentQueuedAt;  // real arena team id -> when a bot team was queued against it
     time_t RealPlayerLastTimeSeen = 0;
     time_t DelayLoginBotsTimer;
     time_t printStatsTimer;

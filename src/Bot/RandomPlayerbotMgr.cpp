@@ -7,7 +7,12 @@
 #include "RandomPlayerbotMgr.h"
 #include "PlayerbotsDatabase.h"
 #include "AiFactory.h"
+#include "ArenaTeamMgr.h"
 #include "Battleground.h"
+#include "BattlegroundQueue.h"
+#include "CharacterCache.h"
+#include "GameTime.h"
+#include "GroupMgr.h"
 #include "BattlegroundMgr.h"
 #include "Cell.h"
 #include "CellImpl.h"
@@ -394,6 +399,10 @@ void RandomPlayerbotMgr::UpdateAIInternal(uint32 /*elapsed*/, bool /*minimal*/)
     // XorWoW: login-time assignment misses most bots, so keep filling the arena teams from bots in the world
     if (sPlayerbotAIConfig.randomBotJoinBG && time(nullptr) > (ArenaTeamCheckTimer + 300))
         TopUpArenaTeams();
+
+    // XorWoW: a real team left unmatched in a rated arena queue gets a bot team at its own MMR
+    if (sPlayerbotAIConfig.randomBotJoinBG && time(nullptr) > (ArenaMatchCheckTimer + 10))
+        MatchRatedArenaQueues();
 
     if (sPlayerbotAIConfig.randomBotAutologin && sPlayerbotAIConfig.randomBotPrintStatsInterval &&
         time(nullptr) > (printStatsTimer + sPlayerbotAIConfig.randomBotPrintStatsInterval))
@@ -926,6 +935,8 @@ void RandomPlayerbotMgr::CheckBgQueue()
 
     LOG_DEBUG("playerbots", "Checking BG Queue...");
 
+    bool playerInRatedArenaQueue = false;
+
     // Initialize Battleground Data (do not clear here)
 
     for (int bracket = BG_BRACKET_ID_FIRST; bracket < MAX_BATTLEGROUND_BRACKETS; ++bracket)
@@ -1017,7 +1028,10 @@ void RandomPlayerbotMgr::CheckBgQueue()
                 if (BattlegroundMgr::BGArenaType(queueTypeId))
                 {
                     if (isRated)
+                    {
                         BattlegroundData[queueTypeId][bracketId].activeRatedArenaQueue = 1;
+                        playerInRatedArenaQueue = true;
+                    }
                     else
                         BattlegroundData[queueTypeId][bracketId].activeSkirmishArenaQueue = 1;
                 }
@@ -1186,6 +1200,10 @@ void RandomPlayerbotMgr::CheckBgQueue()
         updateBGInstanceCount(BATTLEGROUND_QUEUE_AB, abBrackets, randomBotAutoJoinBGABCount);
         updateBGInstanceCount(BATTLEGROUND_QUEUE_WS, wsBrackets, randomBotAutoJoinBGWSCount);
     }
+
+    // XorWoW: a team waiting in a rated queue should not wait for the 5-minute top-up to get opponents
+    if (playerInRatedArenaQueue && time(nullptr) > (ArenaTeamCheckTimer + 30))
+        TopUpArenaTeams();
 
     LogBattlegroundInfo();
 }
@@ -1833,6 +1851,171 @@ void RandomPlayerbotMgr::TopUpArenaTeams()
              RandomPlayerbotFactory::GetBotArenaTeamCount(ARENA_TYPE_2v2), sPlayerbotAIConfig.randomBotArenaTeam2v2Count,
              RandomPlayerbotFactory::GetBotArenaTeamCount(ARENA_TYPE_3v3), sPlayerbotAIConfig.randomBotArenaTeam3v3Count,
              RandomPlayerbotFactory::GetBotArenaTeamCount(ARENA_TYPE_5v5), sPlayerbotAIConfig.randomBotArenaTeam5v5Count);
+}
+
+// Real players get 30 seconds to find each other in a rated queue before a bot team is sent in
+static constexpr uint32 ARENA_BOT_OPPONENT_DELAY_MS = 30 * IN_MILLISECONDS;
+
+static bool IsRandomBotGuid(ObjectGuid guid)
+{
+    uint32 const accountId = sCharacterCache->GetCharacterAccountIdByGuid(guid);
+    return accountId && sPlayerbotAIConfig.IsInRandomAccountList(accountId);
+}
+
+void RandomPlayerbotMgr::MatchRatedArenaQueues()
+{
+    ArenaMatchCheckTimer = time(nullptr);
+
+    struct Request
+    {
+        uint8 arenaType;
+        uint8 bracketId;
+        uint32 matchmakerRating;
+        uint32 teamId;
+    };
+    std::vector<Request> requests;
+
+    uint32 const nowMs = static_cast<uint32>(GameTime::GetGameTimeMS().count());
+    time_t const now = time(nullptr);
+
+    for (uint8 arenaType : {ARENA_TYPE_2v2, ARENA_TYPE_3v3, ARENA_TYPE_5v5})
+    {
+        BattlegroundQueue& queue =
+            sBattlegroundMgr->GetBattlegroundQueue(BattlegroundMgr::BGQueueTypeId(BATTLEGROUND_AA, arenaType));
+
+        for (uint8 bracket = 0; bracket < MAX_BATTLEGROUND_BRACKETS; ++bracket)
+        {
+            for (uint8 groupType : {BG_QUEUE_PREMADE_ALLIANCE, BG_QUEUE_PREMADE_HORDE})
+            {
+                for (GroupQueueInfo const* ginfo : queue.m_QueuedGroups[bracket][groupType])
+                {
+                    if (!ginfo->IsRated || ginfo->IsInvitedToBGInstanceGUID)
+                        continue;
+
+                    if (nowMs - ginfo->JoinTime < ARENA_BOT_OPPONENT_DELAY_MS)
+                        continue;
+
+                    ArenaTeam* team = sArenaTeamMgr->GetArenaTeamById(ginfo->ArenaTeamId);
+                    if (!team || IsRandomBotGuid(team->GetCaptain()))
+                        continue;
+
+                    auto served = ArenaOpponentQueuedAt.find(ginfo->ArenaTeamId);
+                    if (served != ArenaOpponentQueuedAt.end() && now - served->second < 60)
+                        continue;
+
+                    requests.push_back({arenaType, bracket, ginfo->ArenaMatchmakerRating, ginfo->ArenaTeamId});
+                }
+            }
+        }
+    }
+
+    // Queues are not touched while they are being walked
+    for (Request const& request : requests)
+        if (QueueBotArenaOpponent(request.arenaType, request.bracketId, request.matchmakerRating, request.teamId))
+            ArenaOpponentQueuedAt[request.teamId] = now;
+}
+
+bool RandomPlayerbotMgr::QueueBotArenaOpponent(uint8 arenaType, uint8 bracketId, uint32 matchmakerRating,
+                                               uint32 playerTeamId)
+{
+    Battleground* bgt = sBattlegroundMgr->GetBattlegroundTemplate(BATTLEGROUND_AA);
+    if (!bgt)
+        return false;
+
+    BattlegroundQueueTypeId const queueTypeId = BattlegroundMgr::BGQueueTypeId(BATTLEGROUND_AA, arenaType);
+
+    std::vector<ArenaTeam*> candidates;
+    for (auto const& [id, team] : sArenaTeamMgr->GetArenaTeams())
+        if (team->GetType() == arenaType && id != playerTeamId && team->GetMembersSize() >= arenaType &&
+            IsRandomBotGuid(team->GetCaptain()))
+            candidates.push_back(team);
+
+    std::shuffle(candidates.begin(), candidates.end(), std::mt19937(urand(0, UINT32_MAX)));
+
+    for (ArenaTeam* team : candidates)
+    {
+        std::vector<Player*> members;
+        for (ArenaTeamMember const& slot : team->GetMembers())
+        {
+            Player* member = ObjectAccessor::FindPlayer(slot.Guid);
+            if (!member || !GET_PLAYERBOT_AI(member) || !member->IsAlive() || member->IsInCombat() ||
+                member->InBattleground() || member->InBattlegroundQueue() || member->IsBeingTeleported())
+                break;
+
+            PvPDifficultyEntry const* entry = GetBattlegroundBracketByLevel(bgt->GetMapId(), member->GetLevel());
+            if (!entry || entry->GetBracketId() != bracketId)
+                break;
+
+            // never pull a bot out of a group a real player is in
+            bool withRealPlayer = false;
+            if (Group* group = member->GetGroup())
+                for (GroupReference* ref = group->GetFirstMember(); ref && !withRealPlayer; ref = ref->next())
+                    if (Player* other = ref->GetSource())
+                        withRealPlayer = !IsRandomBotGuid(other->GetGUID());
+            if (withRealPlayer)
+                break;
+
+            members.push_back(member);
+        }
+
+        if (members.size() != team->GetMembersSize())
+            continue;
+
+        Player* leader = members.front();
+        for (Player* member : members)
+            if (member->GetGUID() == team->GetCaptain())
+                leader = member;
+
+        for (Player* member : members)
+            if (Group* group = member->GetGroup())
+            {
+                if (group->IsLeader(member->GetGUID()))
+                    group->Disband(true);
+                else
+                    group->RemoveMember(member->GetGUID());
+            }
+
+        Group* group = new Group();
+        if (!group->Create(leader))
+        {
+            delete group;
+            continue;
+        }
+        sGroupMgr->AddGroup(group);
+
+        for (Player* member : members)
+            if (member != leader)
+                group->AddMember(member);
+
+        PvPDifficultyEntry const* bracketEntry = GetBattlegroundBracketByLevel(bgt->GetMapId(), leader->GetLevel());
+        BattlegroundQueue& queue = sBattlegroundMgr->GetBattlegroundQueue(queueTypeId);
+
+        bgt->SetRated(true);
+        GroupQueueInfo* ginfo = queue.AddGroup(leader, group, BATTLEGROUND_AA, bracketEntry, arenaType, true, false,
+                                               std::max<uint32>(team->GetRating(), 1), matchmakerRating, team->GetId(),
+                                               team->GetPreviousOpponents());
+        uint32 const avgWaitTime = queue.GetAverageQueueWaitTime(ginfo);
+
+        for (Player* member : members)
+        {
+            WorldPacket data;
+            uint32 const queueSlot = member->AddBattlegroundQueueId(queueTypeId);
+            sBattlegroundMgr->BuildBattlegroundStatusPacket(&data, bgt, queueSlot, STATUS_WAIT_QUEUE, avgWaitTime, 0,
+                                                            arenaType, TEAM_NEUTRAL, true);
+            member->SendDirectMessage(&data);
+        }
+
+        sBattlegroundMgr->ScheduleQueueUpdate(matchmakerRating, arenaType, queueTypeId, BATTLEGROUND_AA,
+                                              bracketEntry->GetBracketId());
+
+        LOG_INFO("playerbots", "Rated {}v{}: bot team <{}> queued at MMR {} against arena team {}", arenaType,
+                 arenaType, team->GetName(), matchmakerRating, playerTeamId);
+        return true;
+    }
+
+    LOG_INFO("playerbots", "Rated {}v{}: no idle bot team to queue against arena team {}", arenaType, arenaType,
+             playerTeamId);
+    return false;
 }
 
 void RandomPlayerbotMgr::InitArenaTeams()
