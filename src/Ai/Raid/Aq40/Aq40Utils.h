@@ -19,10 +19,16 @@ struct CthunGlareSweep
     float beamAngle = 0.0f;
 };
 
+// XorWoW: the stomach exit, areatrigger 4033 on the island between the two Flesh Tentacles.
+float const CTHUN_STOMACH_EXIT_X = -8546.23f;
+float const CTHUN_STOMACH_EXIT_Y = 1987.65f;
+float const CTHUN_STOMACH_EXIT_Z = -96.52f;
+
 class RaidAq40Utils
 {
 public:
     static Creature* GetEyeOfCthun(Player* bot);
+    static bool IsInCthunStomach(Player* bot);
     // Fills the sweep state while the eye is casting Dark Glare, returns false otherwise.
     static bool GetGlareSweep(Creature* eye, CthunGlareSweep& sweep);
     // Absolute angle (around the eye) the bot should run to, or false when it is out of the beam's path.

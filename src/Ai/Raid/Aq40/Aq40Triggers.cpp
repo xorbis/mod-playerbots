@@ -7,6 +7,8 @@
 #include "Aq40Triggers.h"
 #include "Aq40Utils.h"
 
+uint32 const NPC_FLESH_TENTACLE = 15802;
+
 bool Aq40CthunDarkGlareTrigger::IsActive()
 {
     // Bots in the stomach (below the floor) are out of the beam's reach
@@ -20,4 +22,12 @@ bool Aq40CthunDarkGlareTrigger::IsActive()
 
     float escapeAngle;
     return RaidAq40Utils::GetGlareEscapeAngle(bot, eye, sweep, escapeAngle);
+}
+
+bool Aq40CthunStomachExitTrigger::IsActive()
+{
+    if (!bot->IsAlive() || !RaidAq40Utils::IsInCthunStomach(bot))
+        return false;
+
+    return !bot->FindNearestCreature(NPC_FLESH_TENTACLE, 100.0f);
 }

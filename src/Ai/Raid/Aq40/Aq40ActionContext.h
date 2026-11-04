@@ -17,10 +17,12 @@ public:
     RaidAq40ActionContext()
     {
         creators["aq40 cthun avoid dark glare"] = &RaidAq40ActionContext::cthun_avoid_dark_glare;
+        creators["aq40 cthun stomach exit"] = &RaidAq40ActionContext::cthun_stomach_exit;
     }
 
 private:
     static Action* cthun_avoid_dark_glare(PlayerbotAI* ai) { return new Aq40CthunAvoidDarkGlareAction(ai); }
+    static Action* cthun_stomach_exit(PlayerbotAI* ai) { return new Aq40CthunStomachExitAction(ai); }
 };
 
 #endif

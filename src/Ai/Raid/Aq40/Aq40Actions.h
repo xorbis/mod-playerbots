@@ -20,4 +20,19 @@ public:
     }
     bool Execute(Event event) override;
 };
+
+// XorWoW: walk to the stomach exit once both Flesh Tentacles are dead. Areatriggers are reported by
+// the game client, which bots do not have, so the action reports them itself.
+class Aq40CthunStomachExitAction : public MovementAction
+{
+public:
+    Aq40CthunStomachExitAction(PlayerbotAI* botAI, std::string const name = "aq40 cthun stomach exit")
+        : MovementAction(botAI, name)
+    {
+    }
+    bool Execute(Event event) override;
+
+private:
+    uint32 lastExitMSTime = 0;
+};
 #endif

@@ -13,6 +13,9 @@ void RaidAq40Strategy::InitTriggers(std::vector<TriggerNode*>& triggers)
     triggers.push_back(
         new TriggerNode("aq40 cthun dark glare",
             { NextAction("aq40 cthun avoid dark glare", ACTION_EMERGENCY + 6) }));
+    triggers.push_back(
+        new TriggerNode("aq40 cthun stomach exit",
+            { NextAction("aq40 cthun stomach exit", ACTION_EMERGENCY + 6) }));
 }
 
 void RaidAq40Strategy::InitMultipliers(std::vector<Multiplier*>& multipliers)

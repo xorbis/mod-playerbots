@@ -47,6 +47,12 @@ Creature* RaidAq40Utils::GetEyeOfCthun(Player* bot)
     return eye && eye->IsAlive() && eye->IsInCombat() ? eye : nullptr;
 }
 
+bool RaidAq40Utils::IsInCthunStomach(Player* bot)
+{
+    // Other parts of the instance go below zero as well, the stomach is the area under C'Thun
+    return bot->GetPositionZ() < -40.0f && bot->GetExactDist2d(CTHUN_STOMACH_EXIT_X, CTHUN_STOMACH_EXIT_Y) < 100.0f;
+}
+
 bool RaidAq40Utils::GetGlareSweep(Creature* eye, CthunGlareSweep& sweep)
 {
     std::lock_guard<std::mutex> lock(glareMutex);

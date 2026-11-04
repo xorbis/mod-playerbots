@@ -17,4 +17,12 @@ public:
     Aq40CthunDarkGlareTrigger(PlayerbotAI* botAI) : Trigger(botAI, "aq40 cthun dark glare") {}
     bool IsActive() override;
 };
+
+// XorWoW: both Flesh Tentacles are dead, time to leave the stomach.
+class Aq40CthunStomachExitTrigger : public Trigger
+{
+public:
+    Aq40CthunStomachExitTrigger(PlayerbotAI* botAI) : Trigger(botAI, "aq40 cthun stomach exit") {}
+    bool IsActive() override;
+};
 #endif

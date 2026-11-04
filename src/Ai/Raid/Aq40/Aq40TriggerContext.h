@@ -16,10 +16,12 @@ public:
     RaidAq40TriggerContext()
     {
         creators["aq40 cthun dark glare"] = &RaidAq40TriggerContext::cthun_dark_glare;
+        creators["aq40 cthun stomach exit"] = &RaidAq40TriggerContext::cthun_stomach_exit;
     }
 
 private:
     static Trigger* cthun_dark_glare(PlayerbotAI* ai) { return new Aq40CthunDarkGlareTrigger(ai); }
+    static Trigger* cthun_stomach_exit(PlayerbotAI* ai) { return new Aq40CthunStomachExitTrigger(ai); }
 };
 
 #endif
