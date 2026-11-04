@@ -270,6 +270,8 @@ void PlayerbotAI::UpdateAI(uint32 elapsed, bool minimal)
 
     UpdateBotNavWaterCost();
 
+    RescueFromUnderArenaFloor(elapsed);
+
     // Handle cheat options (set bot health and power if cheats are enabled)
     if (bot->IsAlive() &&
         (static_cast<uint32>(GetCheat()) > 0 || static_cast<uint32>(sPlayerbotAIConfig.botCheatMask) > 0))
@@ -427,6 +429,48 @@ void PlayerbotAI::UpdateAI(uint32 elapsed, bool minimal)
 // "avoid water": the bot's paths go around water (the core's water cost 20) unless its master is
 // wading or swimming, or was in the last 5 seconds so a bot behind them doesn't veer off once they
 // step out. Without the strategy the cost is 1 and the bot takes the shortest path like a player.
+// XorWoW: the core's under-map rescues (HandlePlayerUnderMap from movement opcodes, the arena area
+// triggers) both start from client packets, so a bot under an arena floor stays there and the match
+// cannot end. Three checks a second apart keep a passing knockback or a rising pillar from counting.
+void PlayerbotAI::RescueFromUnderArenaFloor(uint32 elapsed)
+{
+    arenaFloorCheckTimer += elapsed;
+    if (arenaFloorCheckTimer < 1000)
+        return;
+    arenaFloorCheckTimer = 0;
+
+    Battleground* bg = bot->InArena() ? bot->GetBattleground() : nullptr;
+    if (!bg || bg->GetStatus() != STATUS_IN_PROGRESS || !bot->IsAlive())
+    {
+        arenaUnderFloorChecks = 0;
+        return;
+    }
+
+    // Searched from head height: a floor above the feet means the bot sank, none at all means it is below
+    // everything. Starting higher would mistake a bridge overhead for the floor.
+    float const z = bot->GetPositionZ();
+    float const floorZ = bot->GetMap()->GetHeight(bot->GetPhaseMask(), bot->GetPositionX(), bot->GetPositionY(), z + 2.0f);
+    bool const underFloor = floorZ <= INVALID_HEIGHT || floorZ > z + 1.0f ||
+                            (bg->GetBgTypeID() == BATTLEGROUND_DS && z < 0.0f);  // lowest floor there is 3.16
+
+    if (!underFloor)
+    {
+        arenaUnderFloorChecks = 0;
+        return;
+    }
+
+    if (++arenaUnderFloorChecks < 3)
+        return;
+    arenaUnderFloorChecks = 0;
+
+    LOG_INFO("playerbots", "Arena floor rescue: {} on map {} at {:.2f} {:.2f} {:.2f}, floor {:.2f}", bot->GetName(),
+             bot->GetMapId(), bot->GetPositionX(), bot->GetPositionY(), z, floorZ);
+
+    bot->StopMoving();
+    bot->GetMotionMaster()->Clear();
+    bg->HandlePlayerUnderMap(bot);
+}
+
 void PlayerbotAI::UpdateBotNavWaterCost()
 {
     BotState state = currentState == BOT_STATE_COMBAT ? BOT_STATE_COMBAT : BOT_STATE_NON_COMBAT;

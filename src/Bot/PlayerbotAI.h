@@ -627,6 +627,9 @@ private:
     bool IsTellAllowed(PlayerbotSecurityLevel securityLevel = PLAYERBOT_SECURITY_ALLOW_ALL);
     void UpdateAIGroupMaster();
     void UpdateBotNavWaterCost();
+    void RescueFromUnderArenaFloor(uint32 elapsed);
+    uint32 arenaFloorCheckTimer = 0;
+    uint8 arenaUnderFloorChecks = 0;
     Item* FindItemInInventory(std::function<bool(ItemTemplate const*)> checkItem) const;
     void HandleCommands();
     void HandleCommand(uint32 type, std::string const& text, Player& fromPlayer, const uint32 lang = LANG_UNIVERSAL);
